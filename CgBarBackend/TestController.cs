@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CgBarBackend.Factories;
 using CgBarBackend.Services;
+using LinqToTwitter;
+using LinqToTwitter.OAuth;
 using Microsoft.AspNetCore.Mvc;
 using Tweetinvi;
 using Tweetinvi.Models;
@@ -13,13 +16,11 @@ namespace CgBarBackend
     [Route("Test/[action]")]
     public class TestController : ControllerBase
     {
-        private readonly ITwitterCredentialsSupplier _twitterCredentialsSupplier;
-        private readonly TwitterClient _client;
+        private readonly ITwitterClientFactory _twitterClientFactory;
 
-        public TestController(ITwitterCredentialsSupplier twitterCredentialsSupplier, TwitterClient client)
+        public TestController(ITwitterClientFactory twitterClientFactory)
         {
-            _twitterCredentialsSupplier = twitterCredentialsSupplier;
-            _client = client;
+            _twitterClientFactory = twitterClientFactory;
         }
 
         public bool Test()
@@ -29,16 +30,29 @@ namespace CgBarBackend
 
         public async Task<object> GetUserName(string userName)
         {
-            var client = new TwitterClient(_twitterCredentialsSupplier.GetTwitterCredentials());
+            var client = _twitterClientFactory.AccessTokenTwitterClient;
             var user = await client.Users.GetUserAsync(userName).ConfigureAwait(false);
             return new {user.Name, user.Location, user.Description};
         }
 
         public async Task<IWebhookEnvironment[]> WebHookTests()
         {
-            var environments = await _client.AccountActivity.GetAccountActivityWebhookEnvironmentsAsync().ConfigureAwait(false);
+            //var client = new TwitterClient(new TwitterCredentials
+            //    {BearerToken = _twitterCredentialsSupplier.ApplicationBearerToken});
+            var client = _twitterClientFactory.BearerTokenClient;
+            var environments = await client.AccountActivity.GetAccountActivityWebhookEnvironmentsAsync().ConfigureAwait(false);
 
             return environments;
+
+            //var twitterCtx = new TwitterContext(new ApplicationOnlyAuthorizer());
+
+            //var searchResponse =
+            //    await
+            //        (from search in twitterCtx.Search
+            //            where search.Type == SearchType.Search &&
+            //                  search.Query == "\"LINQ to Twitter\""
+            //            select search)
+            //        .SingleOrDefaultAsync();
         }
     }
 

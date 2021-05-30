@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CgBarBackend.Factories;
 using CgBarBackend.Services;
 using Tweetinvi;
 using Tweetinvi.AspNet;
@@ -21,10 +22,7 @@ namespace CgBarBackend
         {
             services.AddControllers();
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
-            services.AddScoped<TwitterClient>((IServiceProvider provider) =>
-            {
-                return new TwitterClient(provider.GetService<ITwitterCredentialsSupplier>().GetTwitterCredentials());
-            });
+            services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

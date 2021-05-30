@@ -9,13 +9,21 @@ namespace CgBarBackend.Services
 {
     public class TwitterCredentialsSupplier : ITwitterCredentialsSupplier
     {
-        public string EnvironmentName { get; private set; }
+        private readonly IConfiguration _configuration;
 
         private readonly ITwitterCredentials _credentials;
         private readonly IConsumerOnlyCredentials _consumerOnlyCredentials;
 
+        public string ConsumerKey => _configuration?["TwitterApi:ConsumerKey"];
+        public string AccessToken => _configuration?["TwitterApi:AccessToken"];
+        public string ConsumerKeySecret => _configuration?["TwitterApi:ConsumerKeySecret"];
+        public string AccessTokenSecret => _configuration?["TwitterApi:AccessTokenSecret"];
+        public string ApplicationBearerToken => _configuration?["TwitterApi:ApplicationBearerToken"];
+        public string EnvironmentName => _configuration?["TwitterApi:EnvironmentName"];
+
         public TwitterCredentialsSupplier(IConfiguration configuration)
         {
+            _configuration = configuration;
             _credentials = new TwitterCredentials(
                 configuration["TwitterApi:ConsumerKey"], configuration["TwitterApi:ConsumerKeySecret"],
                 configuration["TwitterApi:AccessToken"], configuration["TwitterApi:AccessTokenSecret"]);
@@ -24,7 +32,6 @@ namespace CgBarBackend.Services
             {
                 BearerToken = configuration["TwitterApi:ApplicationBearerToken"]
             };
-            EnvironmentName = configuration["TwitterApi:EnvironmentName"];
         }
 
         public IReadOnlyTwitterCredentials GetTwitterCredentials()
