@@ -40,7 +40,7 @@ namespace CgBarBackend.Controllers
             var hours = DisplayNumberWithUnit(timeUntilOpening.Hours, "hour");
             var minutes = DisplayNumberWithUnit(timeUntilOpening.Minutes, "minute");
 
-            var displayTimeUntil = $"{days} {hours} and {minutes}";
+            var displayTimeUntil = $"{days}, {hours} and {minutes}";
             if (timeUntilOpening.TotalDays == 0)
             {
                 displayTimeUntil = $"{hours} and {minutes}";
