@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="linqtotwitter" Version="6.6.0" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
     <PackageReference Include="TweetinviAPI.AspNetPlugin" Version="5.0.4" />
   </ItemGroup>
