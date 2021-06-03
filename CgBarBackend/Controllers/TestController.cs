@@ -26,7 +26,7 @@ namespace CgBarBackend.Controllers
 
         public async Task<object> GetUserName(string userName)
         {
-            var client = _twitterClientFactory.AccessTokenTwitterClient;
+            var client = _twitterClientFactory.UserClient;
             var user = await client.Users.GetUserAsync(userName).ConfigureAwait(false);
             return new {user.Name, user.Location, user.Description};
         }
@@ -60,7 +60,7 @@ namespace CgBarBackend.Controllers
 
             if (send == "y")
             {
-                var client = _twitterClientFactory.AccessTokenTwitterClient;
+                var client = _twitterClientFactory.UserClient;
                 var tweet = await client.Tweets.PublishTweetAsync(messages[offset]);
                 return new { message = message, tweet_sent = true, tweetId = tweet.Id};
             }
@@ -77,7 +77,7 @@ namespace CgBarBackend.Controllers
 
         public async Task<IWebhookEnvironment[]> Environments()
         {
-            var client = _twitterClientFactory.BearerTokenClient;
+            var client = _twitterClientFactory.ApplicationBearerTokenOnlyClient;
             var environments = await client.AccountActivity.GetAccountActivityWebhookEnvironmentsAsync().ConfigureAwait(false);
 
             return environments;
@@ -85,7 +85,7 @@ namespace CgBarBackend.Controllers
 
         public async Task<IWebhook> RegisterWebhook()
         {
-            var client = _twitterClientFactory.AccessTokenTwitterClient;
+            var client = _twitterClientFactory.UserClient;
             var result = await client.AccountActivity.CreateAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"],
                 _configuration["TwitterApi:Host"] + Constants.Twitter.BaseWebhookUrl);
             return result;
@@ -93,7 +93,7 @@ namespace CgBarBackend.Controllers
 
         public async Task<bool> SubscribeToAccount()
         {
-            var client = _twitterClientFactory.AccessTokenTwitterClient;
+            var client = _twitterClientFactory.UserClient;
             await client.AccountActivity.SubscribeToAccountActivityAsync(_configuration["TwitterApi:Environment"]);
             return true;
         }

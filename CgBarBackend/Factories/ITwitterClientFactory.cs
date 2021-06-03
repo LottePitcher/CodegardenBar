@@ -4,9 +4,9 @@ namespace CgBarBackend.Factories
 {
     public interface ITwitterClientFactory
     {
-        TwitterClient BearerTokenClient { get; }
-        TwitterClient ConsumerOnlyTwitterClient { get; }
-        TwitterClient AccessTokenTwitterClient { get; }
-        TwitterClient ConsumerBearerTwitterClient { get; }
+        TwitterClient ApplicationBearerTokenOnlyClient { get; }
+        TwitterClient ApplicationClient { get; }
+        TwitterClient UserClient { get; }
+        TwitterClient ApplicationBearerTokenClient { get; }
     }
 }

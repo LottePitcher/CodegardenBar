@@ -17,18 +17,18 @@ namespace CgBarBackend.Factories
             _twitterCredentialsSupplier = twitterCredentialsSupplier;
         }
 
-        public TwitterClient BearerTokenClient => new TwitterClient(new TwitterCredentials()
+        public TwitterClient ApplicationBearerTokenOnlyClient => new TwitterClient(new TwitterCredentials()
             {BearerToken = _twitterCredentialsSupplier.ApplicationBearerToken});
 
-        public TwitterClient ConsumerOnlyTwitterClient => new TwitterClient(
+        public TwitterClient ApplicationClient => new TwitterClient(
             new TwitterCredentials(_twitterCredentialsSupplier.ConsumerKey,
                 _twitterCredentialsSupplier.ConsumerKeySecret));
 
-        public TwitterClient AccessTokenTwitterClient => new TwitterClient(
+        public TwitterClient UserClient => new TwitterClient(
             new TwitterCredentials(_twitterCredentialsSupplier.ConsumerKey,
                 _twitterCredentialsSupplier.ConsumerKeySecret, _twitterCredentialsSupplier.AccessToken, _twitterCredentialsSupplier.AccessTokenSecret));
 
-        public TwitterClient ConsumerBearerTwitterClient => new TwitterClient(
+        public TwitterClient ApplicationBearerTokenClient => new TwitterClient(
             new TwitterCredentials(_twitterCredentialsSupplier.ConsumerKey,
                 _twitterCredentialsSupplier.ConsumerKeySecret, _twitterCredentialsSupplier.ApplicationBearerToken));
     }
