@@ -2,7 +2,9 @@
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Tweetinvi;
 using Tweetinvi.Models;
 
 namespace CgBarBackend.Controllers
@@ -12,11 +14,14 @@ namespace CgBarBackend.Controllers
     {
         private readonly ITwitterClientFactory _twitterClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _cache;
 
-        public TestController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration)
+        public TestController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
+            IMemoryCache cache)
         {
             _twitterClientFactory = twitterClientFactory;
             _configuration = configuration;
+            _cache = cache;
         }
 
         public bool Test()
@@ -91,10 +96,32 @@ namespace CgBarBackend.Controllers
             return result;
         }
 
-        public async Task<bool> SubscribeToAccount()
+        public async Task<object> StartSubscribeToAccount()
         {
-            var client = _twitterClientFactory.UserClient;
-            await client.AccountActivity.SubscribeToAccountActivityAsync(_configuration["TwitterApi:Environment"]);
+            var appClient = _twitterClientFactory.ApplicationClient;
+            var authRequest = await appClient.Auth.RequestAuthenticationUrlAsync();
+            var authRequestKey = Guid.NewGuid();
+            _cache.Set(authRequestKey, authRequest,
+                new MemoryCacheEntryOptions {SlidingExpiration = new TimeSpan(0, 0, 10, 0)});
+            
+
+            return new { key = authRequestKey, url = authRequest.AuthorizationURL } ;
+        }
+
+        public async Task<bool> SubscribeToAccount(Guid authKey, string pin)
+        {
+            if (_cache.TryGetValue<IAuthenticationRequest>(authKey, out var cachedAuthRequest) == false)
+            {
+                return false;
+            }
+
+            var appClient = _twitterClientFactory.ApplicationClient;
+
+            var userCredentials = await appClient.Auth.RequestCredentialsFromVerifierCodeAsync(pin, cachedAuthRequest);
+
+            var userClient = new TwitterClient(userCredentials);
+
+            await userClient.AccountActivity.SubscribeToAccountActivityAsync(_configuration["TwitterApi:Environment"]);
             return true;
         }
     }

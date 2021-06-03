@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
 using CgBarBackend.Services;
+using Microsoft.Extensions.Logging;
 using Tweetinvi;
 using Tweetinvi.AspNet;
 
@@ -23,6 +24,13 @@ namespace CgBarBackend
             services.AddControllers();
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
+
+            // remove when adding mvc
+            services.AddMemoryCache();
+
+            services.AddLogging(loggingBuilder => {
+                loggingBuilder.AddFile("app.log", append: true);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
