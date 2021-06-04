@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
+using CgBarBackend.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
@@ -15,13 +16,15 @@ namespace CgBarBackend.Controllers
         private readonly ITwitterClientFactory _twitterClientFactory;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
+        private readonly ITwitterWebhookHandler _twitterWebhookHandler;
 
         public TestController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
-            IMemoryCache cache)
+            IMemoryCache cache, ITwitterWebhookHandler twitterWebhookHandler)
         {
             _twitterClientFactory = twitterClientFactory;
             _configuration = configuration;
             _cache = cache;
+            _twitterWebhookHandler = twitterWebhookHandler;
         }
 
         public bool Test()
@@ -82,7 +85,7 @@ namespace CgBarBackend.Controllers
 
         public async Task<IWebhookEnvironment[]> Environments()
         {
-            var client = _twitterClientFactory.ApplicationBearerTokenOnlyClient;
+            var client = _twitterClientFactory.ApplicationBearerTokenClient;
             var environments = await client.AccountActivity.GetAccountActivityWebhookEnvironmentsAsync().ConfigureAwait(false);
 
             return environments;
@@ -90,8 +93,16 @@ namespace CgBarBackend.Controllers
 
         public async Task<IWebhook> RegisterWebhook()
         {
-            var client = _twitterClientFactory.UserClient;
-            var result = await client.AccountActivity.CreateAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"],
+            var appClient = _twitterClientFactory.ApplicationBearerTokenClient;
+            var webhooks = await appClient.AccountActivity.GetAccountActivityEnvironmentWebhooksAsync(_configuration["TwitterApi:Environment"]);
+            foreach (var webhook in webhooks)
+            {
+                await appClient.AccountActivity.DeleteAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"],
+                    webhook.Id);
+            }
+
+            var userClient = _twitterClientFactory.UserClient;
+            var result = await userClient.AccountActivity.CreateAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"],
                 _configuration["TwitterApi:Host"] + Constants.Twitter.BaseWebhookUrl);
             return result;
         }
@@ -115,13 +126,17 @@ namespace CgBarBackend.Controllers
                 return false;
             }
 
-            var appClient = _twitterClientFactory.ApplicationClient;
+            var appClient = _twitterClientFactory.ApplicationBearerTokenClient;
 
             var userCredentials = await appClient.Auth.RequestCredentialsFromVerifierCodeAsync(pin, cachedAuthRequest);
 
             var userClient = new TwitterClient(userCredentials);
 
             await userClient.AccountActivity.SubscribeToAccountActivityAsync(_configuration["TwitterApi:Environment"]);
+
+            var existingUserSubscriptions = await appClient.AccountActivity.GetAccountActivitySubscriptionsAsync(
+                _configuration["TwitterApi:Environment"]);
+            _twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
             return true;
         }
     }

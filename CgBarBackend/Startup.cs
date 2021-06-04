@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
 using CgBarBackend.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Tweetinvi;
 using Tweetinvi.AspNet;
@@ -24,6 +25,7 @@ namespace CgBarBackend
             services.AddControllers();
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
+            services.AddSingleton<ITwitterWebhookHandler, TwitterWebhookHandler>();
 
             // remove when adding mvc
             services.AddMemoryCache();
@@ -39,10 +41,20 @@ namespace CgBarBackend
 
             Plugins.Add<AspNetPlugin>();
 
-            var twitterClient = new TwitterClient(app.ApplicationServices.GetService<ITwitterCredentialsSupplier>()
-                .GetTwitterCredentials());
+            var twitterClient = app.ApplicationServices.GetService<ITwitterClientFactory>().ApplicationBearerTokenClient;
 
-            app.UseTweetinviWebhooks(new WebhookMiddlewareConfiguration(twitterClient.AccountActivity.CreateRequestHandler()));
+            var accountActivityRequestHandler = twitterClient.AccountActivity.CreateRequestHandler();
+            app.UseTweetinviWebhooks(new WebhookMiddlewareConfiguration(accountActivityRequestHandler));
+
+            var twitterWebhookHandler = app.ApplicationServices.GetService<ITwitterWebhookHandler>();
+            twitterWebhookHandler.Initialize(accountActivityRequestHandler);
+
+            var existingUserSubscriptions = twitterClient.AccountActivity.GetAccountActivitySubscriptionsAsync(
+                    app.ApplicationServices.GetService<IConfiguration>()["TwitterApi:Environment"]).GetAwaiter()
+                .GetResult();
+            twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
+
+
 
             if (env.IsDevelopment())
             {
