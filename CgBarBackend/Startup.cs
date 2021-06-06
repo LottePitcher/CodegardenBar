@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
+using CgBarBackend.Hubs;
 using CgBarBackend.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -33,6 +34,8 @@ namespace CgBarBackend
             services.AddLogging(loggingBuilder => {
                 loggingBuilder.AddFile("app.log", append: true);
             });
+
+            services.AddSignalR();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -66,6 +69,7 @@ namespace CgBarBackend
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHub<TwitterBarHub>("signalR/TwitterBar");
             });
         }
     }

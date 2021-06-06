@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CgBarBackend.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Tweetinvi.Models;
@@ -14,15 +16,18 @@ namespace CgBarBackend.Services
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<TwitterWebhookHandler> _logger;
+        private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _twitterbarHub;
         private IAccountActivityRequestHandler _accountActivityRequestHandler;
 
         private ConcurrentBag<long> _handledUsers = new ConcurrentBag<long>();
 
         public TwitterWebhookHandler(IConfiguration configuration,
-            ILogger<TwitterWebhookHandler> logger)
+            ILogger<TwitterWebhookHandler> logger,
+            IHubContext<TwitterBarHub, ITwitterBarHub> twitterbarHub)
         {
             _configuration = configuration;
             _logger = logger;
+            _twitterbarHub = twitterbarHub;
         }
 
         public void Initialize(IAccountActivityRequestHandler accountActivityRequestHandler)
@@ -40,8 +45,9 @@ namespace CgBarBackend.Services
 
             var accountActivitySteam = _accountActivityRequestHandler.GetAccountActivityStream(userId, _configuration["TwitterApi:Environment"]);
 
-            accountActivitySteam.TweetFavorited += (sender, tweetCreatedEvent) =>
+            accountActivitySteam.TweetFavorited += async (sender, tweetCreatedEvent) =>
             {
+                await _twitterbarHub.NotifyAllTweetFavorited();
                 _logger.LogInformation("a tweet was liked");
             };
 

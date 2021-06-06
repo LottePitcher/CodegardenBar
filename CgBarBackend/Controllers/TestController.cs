@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
+using CgBarBackend.Hubs;
 using CgBarBackend.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Tweetinvi;
@@ -17,14 +19,17 @@ namespace CgBarBackend.Controllers
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
         private readonly ITwitterWebhookHandler _twitterWebhookHandler;
+        private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _twitterBarHub;
 
         public TestController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
-            IMemoryCache cache, ITwitterWebhookHandler twitterWebhookHandler)
+            IMemoryCache cache, ITwitterWebhookHandler twitterWebhookHandler,
+            IHubContext<TwitterBarHub,ITwitterBarHub> twitterBarHub)
         {
             _twitterClientFactory = twitterClientFactory;
             _configuration = configuration;
             _cache = cache;
             _twitterWebhookHandler = twitterWebhookHandler;
+            _twitterBarHub = twitterBarHub;
         }
 
         public bool Test()
@@ -138,6 +143,11 @@ namespace CgBarBackend.Controllers
                 _configuration["TwitterApi:Environment"]);
             _twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
             return true;
+        }
+
+        public async Task PingTwitterBarHub()
+        {
+            await _twitterBarHub.Clients.All.Ping();
         }
     }
 
