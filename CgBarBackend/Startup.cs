@@ -35,6 +35,17 @@ namespace CgBarBackend
                 loggingBuilder.AddFile("app.log", append: true);
             });
 
+            services.AddCors(
+                //options =>
+                //    options.AddDefaultPolicy(builder =>
+                //    {
+                //        builder
+                //            .WithOrigins(Configuration)
+                //            .AllowAnyHeader()
+                //            .AllowAnyMethod();
+                //    })
+            );
+
             services.AddSignalR();
         }
 
@@ -57,8 +68,7 @@ namespace CgBarBackend
                 .GetResult();
             twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
 
-
-
+            
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -66,10 +76,26 @@ namespace CgBarBackend
 
             app.UseRouting();
 
+            ConfigureCors(app,env);
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
                 endpoints.MapHub<TwitterBarHub>("signalR/TwitterBar");
+            });
+
+        }
+
+        private void ConfigureCors(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            app.UseCors(builder =>
+            {
+                builder
+                    //.WithOrigins("http://127.0.0.1:8080/")
+                    .SetIsOriginAllowed((host) => true) //todo figure out why this doesn't work with simply .WithOrigins
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         }
     }

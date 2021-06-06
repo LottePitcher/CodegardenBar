@@ -27,7 +27,24 @@
     <p>CLOSED</p>
   </div>
     
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aspnet-signalr/1.0.27/signalr.min.js" integrity="sha512-a+73ErrZPjhqOu0qbW1QLsenEF4pvDjmnd+Ws6hkDyJlrwAigOQAxQhIT+fPNFWScUvtJQvn+G535TT2C6/G4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="disco-ball.js"></script>
+
+  <script>
+    "use strict";
+
+    var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44361/signalR/TwitterBar").build();
+
+    connection.on("Ping", function () {
+      console.log("singalR ping recieved")
+    });
+
+    connection.start().then(function () {
+      console.log("Connection to signalR hub started")
+    }).catch(function (err) {
+      return console.error(err.toString());
+    });
+  </script>
 
 </body>
 
