@@ -43,14 +43,8 @@ namespace CgBarBackend.Services
                 return false;
             }
 
-            var accountActivitySteam = _accountActivityRequestHandler.GetAccountActivityStream(userId, _configuration["TwitterApi:Environment"]);
-
-            accountActivitySteam.TweetFavorited += async (sender, tweetCreatedEvent) =>
-            {
-                await _twitterbarHub.NotifyAllTweetFavorited();
-                _logger.LogInformation("a tweet was liked");
-            };
-
+            LinkUserSubscriptionsToHub(userId);
+            
             _handledUsers.Add(userId);
             return true;
         }
@@ -64,6 +58,17 @@ namespace CgBarBackend.Services
                     AddUser(userId);
                 }
             }
+        }
+
+        private void LinkUserSubscriptionsToHub(long userId)
+        {
+            var accountActivitySteam = _accountActivityRequestHandler.GetAccountActivityStream(userId, _configuration["TwitterApi:Environment"]);
+
+            accountActivitySteam.TweetFavorited += async (sender, tweetCreatedEvent) =>
+            {
+                await _twitterbarHub.NotifyAllTweetFavorited();
+                _logger.LogInformation("a tweet was liked");
+            };
         }
     }
 }

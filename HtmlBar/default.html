@@ -39,6 +39,10 @@
       console.log("singalR ping recieved")
     });
 
+    connection.on("TweetFavorited", function(){
+      console.log("Somebody liked a bar tweet")
+    })
+
     connection.start().then(function () {
       console.log("Connection to signalR hub started")
     }).catch(function (err) {
