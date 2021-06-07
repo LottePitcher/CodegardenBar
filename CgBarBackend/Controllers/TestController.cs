@@ -41,7 +41,7 @@ namespace CgBarBackend.Controllers
         {
             var client = _twitterClientFactory.UserClient;
             var user = await client.Users.GetUserAsync(userName).ConfigureAwait(false);
-            return new {user.Name, user.Location, user.Description};
+            return new {user.Name, user.Location, user.Description, user.ProfileImageUrl400x400, user.ScreenName};
         }
 
         public async Task<object> TweetCountdown(string send = null)

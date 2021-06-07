@@ -7,9 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CgBarBackend.Authorization;
 using CgBarBackend.Factories;
 using CgBarBackend.Hubs;
 using CgBarBackend.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Tweetinvi;
@@ -27,6 +29,8 @@ namespace CgBarBackend
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
             services.AddSingleton<ITwitterWebhookHandler, TwitterWebhookHandler>();
+            services.AddSingleton<IBarTender, BarTender>();
+            services.AddScoped<RequireBarTenderAdminPasswordFilter>();
 
             // remove when adding mvc
             services.AddMemoryCache();
@@ -68,7 +72,8 @@ namespace CgBarBackend
                 .GetResult();
             twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
 
-            
+            ConfigureBartender(app, env);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -97,6 +102,22 @@ namespace CgBarBackend
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+        }
+
+        private void ConfigureBartender(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            var bartender = app.ApplicationServices.GetService<IBarTender>();
+            var hubContext = app.ApplicationServices.GetService<IHubContext<TwitterBarHub, ITwitterBarHub>>();
+
+            bartender.PatronAdded += async (sender, patron) =>
+                await hubContext.NotifyAllPatronAdded(patron).ConfigureAwait(false);
+            bartender.DrinkOrdered += async (sender, patron) =>
+                await hubContext.NotifyAllDrinkOrdered(patron).ConfigureAwait(false);
+            bartender.DrinkExpired += async (sender, screenName) =>
+                await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
+            bartender.PatronExpired += async (sender, screenName) =>
+                await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
+            
         }
     }
 }
