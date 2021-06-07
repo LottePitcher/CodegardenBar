@@ -26,10 +26,21 @@
   <div class="sign three">
     <p>CLOSED</p>
   </div>
+
+  <div id="barapp">
+    <div v-for="attendee in barAttendees" :key="attendee.twitterhandle">
+      <span style="color:whitesmoke">{{attendee.name}}</span>
+      <img :src="attendee.profileImage" />
+      <span style="color:whitesmoke">{{attendee.drink}}</span>
+    </div>
+  </div>
     
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aspnet-signalr/1.0.27/signalr.min.js" integrity="sha512-a+73ErrZPjhqOu0qbW1QLsenEF4pvDjmnd+Ws6hkDyJlrwAigOQAxQhIT+fPNFWScUvtJQvn+G535TT2C6/G4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="disco-ball.js"></script>
 
+  <!-- Use the second one for production, its faster and has less console information -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2"></script> -->
   <script>
     "use strict";
 
@@ -48,6 +59,24 @@
     }).catch(function (err) {
       return console.error(err.toString());
     });
+
+    var app = new Vue({
+      el: '#barapp',
+      data: {
+        barAttendees: [{
+          screenName: "lottepitcher",
+          name: "Lotte Pitcher",
+          profileImage: "https://pbs.twimg.com/profile_images/1134420323150024704/LzV-zWi__400x400.png",
+          drink: "beer"
+        },
+        {
+          screenName: "migaroez",
+          name: "Sven Geusens",
+          profileImage: "https://pbs.twimg.com/profile_images/1137300241676406784/FqI-fi1k_400x400.png",
+          drink: "vodka"
+        }]
+      }
+    })
   </script>
 
 </body>
