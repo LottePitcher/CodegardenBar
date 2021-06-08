@@ -30,7 +30,6 @@ namespace CgBarBackend
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
             services.AddSingleton<ITwitterWebhookHandler, TwitterWebhookHandler>();
             services.AddSingleton<IBarTender, BarTender>();
-            services.AddScoped<RequireBarTenderAdminPasswordFilter>();
 
             // remove when adding mvc
             services.AddMemoryCache();
@@ -40,14 +39,6 @@ namespace CgBarBackend
             });
 
             services.AddCors(
-                //options =>
-                //    options.AddDefaultPolicy(builder =>
-                //    {
-                //        builder
-                //            .WithOrigins(Configuration)
-                //            .AllowAnyHeader()
-                //            .AllowAnyMethod();
-                //    })
             );
 
             services.AddSignalR();

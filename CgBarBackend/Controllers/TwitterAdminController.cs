@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using CgBarBackend.Authorization;
 using CgBarBackend.Factories;
 using CgBarBackend.Hubs;
 using CgBarBackend.Services;
@@ -12,8 +13,9 @@ using Tweetinvi.Models;
 
 namespace CgBarBackend.Controllers
 {
-    [Route("Test/[action]")]
-    public class TestController : ControllerBase
+    [RequireConfigPasswordFilter("TwitterApi:AdminPassword")]
+    [Route("TwitterAdmin/[action]")]
+    public class TwitterAdminController : ControllerBase
     {
         private readonly ITwitterClientFactory _twitterClientFactory;
         private readonly IConfiguration _configuration;
@@ -21,7 +23,7 @@ namespace CgBarBackend.Controllers
         private readonly ITwitterWebhookHandler _twitterWebhookHandler;
         private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _twitterBarHub;
 
-        public TestController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
+        public TwitterAdminController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
             IMemoryCache cache, ITwitterWebhookHandler twitterWebhookHandler,
             IHubContext<TwitterBarHub,ITwitterBarHub> twitterBarHub)
         {
@@ -32,16 +34,9 @@ namespace CgBarBackend.Controllers
             _twitterBarHub = twitterBarHub;
         }
 
-        public bool Test()
+        public bool Ping()
         {
             return true;
-        }
-
-        public async Task<object> GetUserName(string userName)
-        {
-            var client = _twitterClientFactory.UserClient;
-            var user = await client.Users.GetUserAsync(userName).ConfigureAwait(false);
-            return new {user.Name, user.Location, user.Description, user.ProfileImageUrl400x400, user.ScreenName};
         }
 
         public async Task<object> TweetCountdown(string send = null)
@@ -79,13 +74,6 @@ namespace CgBarBackend.Controllers
             }
 
             return new { message = message, tweet_sent = false };
-        }
-
-        private string DisplayNumberWithUnit(double number, string singular, string plural = null)
-        {
-            if (plural == null) plural = singular + "s";
-            var displayNumber = Convert.ToInt32(number);
-            return (displayNumber == 1) ? displayNumber + " " + singular : displayNumber + " " + plural;
         }
 
         public async Task<IWebhookEnvironment[]> Environments()
@@ -148,6 +136,21 @@ namespace CgBarBackend.Controllers
         public async Task PingTwitterBarHub()
         {
             await _twitterBarHub.Clients.All.Ping();
+        }
+
+        public async Task<object> GetUserDetails(string userName)
+        {
+            var client = _twitterClientFactory.UserClient;
+            var user = await client.Users.GetUserAsync(userName).ConfigureAwait(false);
+            return new { user.Name, user.Location, user.Description, user.ProfileImageUrl400x400, user.ScreenName };
+        }
+
+
+        private string DisplayNumberWithUnit(double number, string singular, string plural = null)
+        {
+            if (plural == null) plural = singular + "s";
+            var displayNumber = Convert.ToInt32(number);
+            return (displayNumber == 1) ? displayNumber + " " + singular : displayNumber + " " + plural;
         }
     }
 

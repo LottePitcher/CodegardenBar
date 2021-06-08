@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CgBarBackend.Controllers
 {
-    [RequireBarTenderAdminPasswordFilter]
+    [RequireConfigPasswordFilter("BarTender:AdminPassword")]
     [Route("BarAdmin/[action]")]
     public class BarAdminController : ControllerBase
     {
-        public bool Test()
+        public bool Ping()
         {
             return true;
         }
