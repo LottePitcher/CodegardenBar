@@ -36,5 +36,17 @@ namespace CgBarBackend.Controllers
         {
             _barTender.OrderDrink(screenName,drink);
         }
+
+        [HttpPost]
+        public void BanPatron(string screenName)
+        {
+            _barTender.BanPatron(screenName);
+        }
+
+        [HttpPost]
+        public void UnBanPatron(string screenName)
+        {
+            _barTender.UnBanPatron(screenName);
+        }
     }
 }

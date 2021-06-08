@@ -15,5 +15,7 @@ namespace CgBarBackend.Services
         void AddPatron(string screenName, string name, string profileImage);
         void OrderDrink(string screenName, string drink);
         Task Load();
+        bool BanPatron(string screenName);
+        bool UnBanPatron(string screenName);
     }
 }

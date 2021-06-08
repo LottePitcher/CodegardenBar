@@ -14,6 +14,10 @@ namespace CgBarBackend.Services
     {
         private readonly IBarTenderRepository _barTenderRepository;
         private ConcurrentDictionary<string, Patron> _patrons = new();
+
+        private object _bannedPatronsLock = new();
+        private List<string> _bannedPatrons = new();
+
         private Timer _cleanupTimer = new Timer();
         private int _drinkExpireTimeInMinutes = 30;
         private int _patronExpireTimeInMinutes = 60;
@@ -37,6 +41,10 @@ namespace CgBarBackend.Services
 
         public void AddPatron(string screenName, string name, string profileImage)
         {
+            if (_bannedPatrons.Contains(screenName))
+            {
+                return;
+            }
             if (_patrons.ContainsKey(screenName))
             {
                 return;
@@ -46,11 +54,15 @@ namespace CgBarBackend.Services
                 {ScreenName = screenName, Name = name, ProfileImage = profileImage, LastDrinkOrdered = DateTime.Now};
             _patrons.TryAdd(screenName, patron);
             PatronAdded?.Invoke(this,patron);
-            _barTenderRepository.SavePatrons(Patrons);
+            _barTenderRepository.SavePatrons(Patrons); // this is call synchronously because we don't want to wait for this to complete
         }
 
         public void OrderDrink(string screenName, string drink)
         {
+            if (_bannedPatrons.Contains(screenName))
+            {
+                return;
+            }
             if (_patrons.ContainsKey(screenName) == false)
             {
                 return;
@@ -61,13 +73,54 @@ namespace CgBarBackend.Services
             DrinkOrdered?.Invoke(this, _patrons[screenName]);
         }
 
+        public bool BanPatron(string screenName)
+        {
+            if (_bannedPatrons.Contains(screenName))
+            {
+                return false;
+            }
+
+            if (_patrons.ContainsKey(screenName) && _patrons.Remove(screenName, out _))
+            {
+                PatronExpired?.Invoke(this, screenName);
+            }
+
+            lock (_bannedPatronsLock)
+            {
+                _bannedPatrons.Add(screenName);
+                _barTenderRepository.SaveBannedPatrons(_bannedPatrons);
+                return true;
+            }
+        }
+
+        public bool UnBanPatron(string screenName)
+        {
+            if (_bannedPatrons.Contains(screenName) == false)
+            {
+                return false;
+            }
+            lock (_bannedPatronsLock)
+            {
+                _bannedPatrons.Remove(screenName);
+                _barTenderRepository.SaveBannedPatrons(_bannedPatrons);
+                return true;
+            }
+        }
+
         public IEnumerable<Patron> Patrons => _patrons.Values.AsEnumerable();
 
         public async Task Load()
         {
             foreach (var patron in await _barTenderRepository.LoadPatrons().ConfigureAwait(false))
             {
+                _patrons.Clear();
                 _patrons.TryAdd(patron.ScreenName, patron);
+            }
+
+            foreach (var bannedPatron in await _barTenderRepository.LoadBannedPatrons().ConfigureAwait(false))
+            {
+                _bannedPatrons.Clear();
+                _bannedPatrons.Add(bannedPatron);
             }
         }
 
