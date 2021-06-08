@@ -15,6 +15,11 @@ namespace CgBarBackend.Services
         private readonly IBarTenderRepository _barTenderRepository;
         private ConcurrentDictionary<string, Patron> _patrons = new();
 
+        public IReadOnlyList<string> Drinks => _drinks.AsReadOnly();
+        public IReadOnlyList<string> PoliteWords => _drinks.AsReadOnly();
+        private List<string> _drinks = new();
+        private List<string> _politeWords = new();
+
         private object _bannedPatronsLock = new();
         private List<string> _bannedPatrons = new();
 
@@ -90,7 +95,7 @@ namespace CgBarBackend.Services
             lock (_bannedPatronsLock)
             {
                 _bannedPatrons.Add(screenName);
-                _barTenderRepository.SaveBannedPatrons(_bannedPatrons);
+                _barTenderRepository.SaveBannedPatrons(_bannedPatrons).ConfigureAwait(false);
                 return true;
             }
         }
@@ -104,25 +109,82 @@ namespace CgBarBackend.Services
             lock (_bannedPatronsLock)
             {
                 _bannedPatrons.Remove(screenName);
-                _barTenderRepository.SaveBannedPatrons(_bannedPatrons);
+                _barTenderRepository.SaveBannedPatrons(_bannedPatrons).ConfigureAwait(false);
                 return true;
             }
+        }
+
+        public bool AddDrink(string name)
+        {
+            if (_drinks.Contains(name))
+            {
+                return false;
+            }
+            _drinks.Add(name);
+            _barTenderRepository.SaveDrinks(_drinks).ConfigureAwait(false);
+            return true;
+        }
+
+        public bool RemoveDrink(string name)
+        {
+            if (_drinks.Contains(name) == false)
+            {
+                return false;
+            }
+            _drinks.Remove(name);
+            _barTenderRepository.SaveDrinks(_drinks).ConfigureAwait(false);
+            return true;
+        }
+
+        public bool AddPoliteWord(string name)
+        {
+            if (_politeWords.Contains(name))
+            {
+                return false;
+            }
+            _politeWords.Add(name);
+            _barTenderRepository.SavePoliteWords(_politeWords).ConfigureAwait(false);
+            return true;
+        }
+
+        public bool RemovePoliteWord(string name)
+        {
+            if (_politeWords.Contains(name) == false)
+            {
+                return false;
+            }
+            _politeWords.Remove(name);
+            _barTenderRepository.SavePoliteWords(_politeWords).ConfigureAwait(false);
+            return true;
         }
 
         public IEnumerable<Patron> Patrons => _patrons.Values.AsEnumerable();
 
         public async Task Load()
         {
+            _patrons.Clear();
+
             foreach (var patron in await _barTenderRepository.LoadPatrons().ConfigureAwait(false))
             {
-                _patrons.Clear();
                 _patrons.TryAdd(patron.ScreenName, patron);
             }
 
+            _bannedPatrons.Clear();
             foreach (var bannedPatron in await _barTenderRepository.LoadBannedPatrons().ConfigureAwait(false))
             {
-                _bannedPatrons.Clear();
                 _bannedPatrons.Add(bannedPatron);
+            }
+
+            _drinks.Clear();
+            foreach (var drink in await _barTenderRepository.LoadDrinks().ConfigureAwait(false))
+            {
+                _drinks.Add(drink);
+            }
+
+            _politeWords.Clear();
+            foreach (var politeWord in await _barTenderRepository.LoadPoliteWords().ConfigureAwait(false))
+            {
+                _politeWords.Add(politeWord);
             }
         }
 
@@ -145,7 +207,7 @@ namespace CgBarBackend.Services
                 }
             }
 
-            _barTenderRepository.SavePatrons(Patrons);
+            _barTenderRepository.SavePatrons(Patrons).ConfigureAwait(false);
         }
     }
 }

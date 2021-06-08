@@ -23,6 +23,8 @@ namespace CgBarBackend.Services
         private readonly ITwitterClientFactory _twitterClientFactory;
         private IAccountActivityRequestHandler _accountActivityRequestHandler;
 
+        private long _userId = 0;
+
         private ConcurrentBag<long> _handledUsers = new ConcurrentBag<long>();
 
         public TwitterWebhookManager(IConfiguration configuration,
@@ -34,6 +36,7 @@ namespace CgBarBackend.Services
             _logger = logger;
             _barTender = barTender;
             _twitterClientFactory = twitterClientFactory;
+            long.TryParse(_configuration["TwitterApi:UserId"], out _userId);
         }
 
         public void Initialize(IAccountActivityRequestHandler accountActivityRequestHandler)
@@ -82,15 +85,38 @@ namespace CgBarBackend.Services
             var client = _twitterClientFactory.UserClient;
             
             _barTender.AddPatron(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.Name, tweetCreatedEvent.Tweet.CreatedBy.ProfileImageUrl400x400);
-            foreach (var userMention in tweetCreatedEvent.Tweet.UserMentions.Where(um => um.Id != 1397223787469459468 && _barTender.PatronExists(um.ScreenName) == false)) //todo put the id in config
+            var mentionedPeople = tweetCreatedEvent.Tweet.UserMentions.Where(um =>
+                um.Id != _userId && _barTender.PatronExists(um.ScreenName) == false).ToList();
+            foreach (var userMention in mentionedPeople) //todo put the id in config
             {
                 var user = await client.Users.GetUserAsync(userMention.ScreenName).ConfigureAwait(false);
                 _barTender.AddPatron(user.ScreenName,user.Name,user.ProfileImageUrl400x400, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
             }
 
-            //todo drinks
+            var tweetWords = tweetCreatedEvent.Tweet.Text.Split(new char[] { ' ','\n','\r'});
+            var foundDrink = _barTender.Drinks.FirstOrDefault(allowedDrink => tweetWords.Contains(allowedDrink));
+            var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Contains(politeWord));
 
-            //todo niceness
+            if (foundDrink == null || foundDrink.Trim().Length <= 0)
+            {
+                return;
+                
+            }
+
+            // todo: process politeness
+            if (mentionedPeople.Any())
+            {
+                foreach (var person in mentionedPeople)
+                {
+                    _barTender.OrderDrink(person.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                }
+            }
+            else
+            {
+                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName,foundDrink);
+            }
+            
+        
         }
     }
 }

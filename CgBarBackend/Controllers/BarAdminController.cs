@@ -48,5 +48,39 @@ namespace CgBarBackend.Controllers
         {
             _barTender.UnBanPatron(screenName);
         }
+
+        [HttpPost]
+        public void AddDrink(string name)
+        {
+            _barTender.AddDrink(name);
+        }
+
+        [HttpPost]
+        public void RemoveDrink(string name)
+        {
+            _barTender.RemoveDrink(name);
+        }
+
+        public IEnumerable<string> Drinks()
+        {
+            return _barTender.Drinks;
+        }
+
+        [HttpPost] 
+        public void AddPoliteWord(string name)
+        {
+            _barTender.AddPoliteWord(name);
+        }
+
+        [HttpPost]
+        public void RemovePoliteWord(string name)
+        {
+            _barTender.RemovePoliteWord(name);
+        }
+
+        public IEnumerable<string> PoliteWords()
+        {
+            return _barTender.PoliteWords;
+        }
     }
 }

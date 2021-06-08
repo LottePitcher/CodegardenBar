@@ -10,5 +10,9 @@ namespace CgBarBackend.Repositories
         Task<Patron[]> LoadPatrons();
         Task SaveBannedPatrons(IEnumerable<string> bannedPatronScreenNames);
         Task<string[]> LoadBannedPatrons();
+        Task SaveDrinks(IEnumerable<string> drinks);
+        Task<string[]> LoadDrinks();
+        Task SavePoliteWords(IEnumerable<string> politeWords);
+        Task<string[]> LoadPoliteWords();
     }
 }
