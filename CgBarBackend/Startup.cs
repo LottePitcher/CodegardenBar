@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using CgBarBackend.Authorization;
 using CgBarBackend.Factories;
 using CgBarBackend.Hubs;
+using CgBarBackend.Repositories;
 using CgBarBackend.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
@@ -30,6 +31,7 @@ namespace CgBarBackend
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
             services.AddSingleton<ITwitterWebhookManager, TwitterWebhookManager>();
             services.AddSingleton<IBarTender, BarTender>();
+            services.AddSingleton<IBarTenderRepository, BarTenderRepository>();
 
             // remove when adding mvc
             services.AddMemoryCache();
@@ -108,7 +110,9 @@ namespace CgBarBackend
                 await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
             bartender.PatronExpired += async (sender, screenName) =>
                 await hubContext.NotifyAllPatronExpired(screenName).ConfigureAwait(false);
-            
+
+            bartender.Load();
+
         }
     }
 }

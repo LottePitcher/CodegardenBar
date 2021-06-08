@@ -5,12 +5,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using CgBarBackend.Models;
+using CgBarBackend.Repositories;
 using Microsoft.Extensions.Configuration;
 
 namespace CgBarBackend.Services
 {
     public class BarTender : IBarTender
     {
+        private readonly IBarTenderRepository _barTenderRepository;
         private ConcurrentDictionary<string, Patron> _patrons = new();
         private Timer _cleanupTimer = new Timer();
         private int _drinkExpireTimeInMinutes = 30;
@@ -22,8 +24,9 @@ namespace CgBarBackend.Services
         public event EventHandler<Patron> DrinkOrdered;
         public event EventHandler<string> DrinkExpired;
 
-        public BarTender(IConfiguration configuration)
+        public BarTender(IConfiguration configuration, IBarTenderRepository barTenderRepository)
         {
+            _barTenderRepository = barTenderRepository;
             int.TryParse(configuration["BarTender:DrinkExpireTimeInMinutes"], out _drinkExpireTimeInMinutes);
             int.TryParse(configuration["BarTender:PatronExpireTimeInMinutes"], out _patronExpireTimeInMinutes);
             int.TryParse(configuration["BarTender:ExpireTimeIntervalInMilliseconds"], out _expireTimeIntervalInMilliseconds);
@@ -43,6 +46,7 @@ namespace CgBarBackend.Services
                 {ScreenName = screenName, Name = name, ProfileImage = profileImage, LastDrinkOrdered = DateTime.Now};
             _patrons.TryAdd(screenName, patron);
             PatronAdded?.Invoke(this,patron);
+            _barTenderRepository.SavePatrons(Patrons);
         }
 
         public void OrderDrink(string screenName, string drink)
@@ -58,6 +62,14 @@ namespace CgBarBackend.Services
         }
 
         public IEnumerable<Patron> Patrons => _patrons.Values.AsEnumerable();
+
+        public async Task Load()
+        {
+            foreach (var patron in await _barTenderRepository.LoadPatrons().ConfigureAwait(false))
+            {
+                _patrons.TryAdd(patron.ScreenName, patron);
+            }
+        }
 
         private void Cleanup()
         {
@@ -77,6 +89,8 @@ namespace CgBarBackend.Services
                     DrinkExpired?.Invoke(this, patron.Key);
                 }
             }
+
+            _barTenderRepository.SavePatrons(Patrons);
         }
     }
 }

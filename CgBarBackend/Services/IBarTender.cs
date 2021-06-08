@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using CgBarBackend.Models;
 
 namespace CgBarBackend.Services
@@ -13,5 +14,6 @@ namespace CgBarBackend.Services
         IEnumerable<Patron> Patrons { get; }
         void AddPatron(string screenName, string name, string profileImage);
         void OrderDrink(string screenName, string drink);
+        Task Load();
     }
 }
