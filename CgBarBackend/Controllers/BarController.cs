@@ -25,6 +25,6 @@ namespace CgBarBackend.Controllers
             return true;
         }
 
-        public IEnumerable<Patron> Patrons() => _barTender.Patrons;
+        public IEnumerable<PatronDto> Patrons() => _barTender.Patrons.Select(patron => new PatronDto(patron));
     }
 }

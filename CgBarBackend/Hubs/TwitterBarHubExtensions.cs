@@ -21,12 +21,12 @@ namespace CgBarBackend.Hubs
 
         public static async Task NotifyAllPatronAdded(this IHubContext<TwitterBarHub, ITwitterBarHub> hub, Patron patron)
         {
-            await hub.Clients.All.PatronAdded(patron).ConfigureAwait(false);
+            await hub.Clients.All.PatronAdded(new PatronDto(patron)).ConfigureAwait(false);
         }
 
         public static async Task NotifyAllDrinkOrdered(this IHubContext<TwitterBarHub, ITwitterBarHub> hub, Patron patron)
         {
-            await hub.Clients.All.DrinkOrdered(patron).ConfigureAwait(false);
+            await hub.Clients.All.DrinkOrdered(new PatronDto(patron)).ConfigureAwait(false);
         }
 
         public static async Task NotifyAllDrinkExpired(this IHubContext<TwitterBarHub, ITwitterBarHub> hub, string patronScreenName)

@@ -12,8 +12,8 @@ namespace CgBarBackend.Hubs
         Task TweetFavorited();
         Task Ping();
 
-        Task PatronAdded(Patron patron);
-        Task DrinkOrdered(Patron patron);
+        Task PatronAdded(PatronDto patron);
+        Task DrinkOrdered(PatronDto patron);
         Task DrinkExpired(string patronScreenName);
         Task PatronExpired(string patronScreenName);
 
