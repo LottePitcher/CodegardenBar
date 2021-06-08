@@ -1,0 +1,13 @@
+html {
+    width: 100%;
+    height: 100%;  
+}
+  
+body {
+    background: -webkit-linear-gradient(bottom left, #111, #222);
+    background: -moz-linear-gradient(bottom left, #111, #222);
+    background: linear-gradient(bottom left, #111, #222);
+    margin: 0;
+    background: #112 url(brick-wall.jpg)  center no-repeat;
+    background-size:cover;
+}
