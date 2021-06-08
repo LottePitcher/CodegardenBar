@@ -2,7 +2,7 @@
 
 namespace CgBarBackend.Services
 {
-    public interface ITwitterWebhookHandler
+    public interface ITwitterWebhookManager
     {
         void Initialize(IAccountActivityRequestHandler accountActivityRequestHandler);
         bool AddUser(long userId);

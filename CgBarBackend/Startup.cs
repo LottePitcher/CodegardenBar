@@ -7,9 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CgBarBackend.Authorization;
 using CgBarBackend.Factories;
 using CgBarBackend.Hubs;
+using CgBarBackend.Repositories;
 using CgBarBackend.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Tweetinvi;
@@ -26,7 +29,9 @@ namespace CgBarBackend
             services.AddControllers();
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
-            services.AddSingleton<ITwitterWebhookHandler, TwitterWebhookHandler>();
+            services.AddSingleton<ITwitterWebhookManager, TwitterWebhookManager>();
+            services.AddSingleton<IBarTender, BarTender>();
+            services.AddSingleton<IBarTenderRepository, BarTenderRepository>();
 
             // remove when adding mvc
             services.AddMemoryCache();
@@ -36,14 +41,6 @@ namespace CgBarBackend
             });
 
             services.AddCors(
-                //options =>
-                //    options.AddDefaultPolicy(builder =>
-                //    {
-                //        builder
-                //            .WithOrigins(Configuration)
-                //            .AllowAnyHeader()
-                //            .AllowAnyMethod();
-                //    })
             );
 
             services.AddSignalR();
@@ -60,7 +57,7 @@ namespace CgBarBackend
             var accountActivityRequestHandler = twitterClient.AccountActivity.CreateRequestHandler();
             app.UseTweetinviWebhooks(new WebhookMiddlewareConfiguration(accountActivityRequestHandler));
 
-            var twitterWebhookHandler = app.ApplicationServices.GetService<ITwitterWebhookHandler>();
+            var twitterWebhookHandler = app.ApplicationServices.GetService<ITwitterWebhookManager>();
             twitterWebhookHandler.Initialize(accountActivityRequestHandler);
 
             var existingUserSubscriptions = twitterClient.AccountActivity.GetAccountActivitySubscriptionsAsync(
@@ -68,7 +65,8 @@ namespace CgBarBackend
                 .GetResult();
             twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
 
-            
+            ConfigureBartender(app, env);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -97,6 +95,24 @@ namespace CgBarBackend
                     .AllowAnyMethod()
                     .AllowCredentials();
             });
+        }
+
+        private void ConfigureBartender(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            var bartender = app.ApplicationServices.GetService<IBarTender>();
+            var hubContext = app.ApplicationServices.GetService<IHubContext<TwitterBarHub, ITwitterBarHub>>();
+
+            bartender.PatronAdded += async (sender, patron) =>
+                await hubContext.NotifyAllPatronAdded(patron).ConfigureAwait(false);
+            bartender.DrinkOrdered += async (sender, patron) =>
+                await hubContext.NotifyAllDrinkOrdered(patron).ConfigureAwait(false);
+            bartender.DrinkExpired += async (sender, screenName) =>
+                await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
+            bartender.PatronExpired += async (sender, screenName) =>
+                await hubContext.NotifyAllPatronExpired(screenName).ConfigureAwait(false);
+
+            bartender.Load();
+
         }
     }
 }
