@@ -39,9 +39,9 @@ namespace CgBarBackend.Services
             _cleanupTimer.Start();
         }
 
-        public void AddPatron(string screenName, string name, string profileImage)
+        public void AddPatron(string screenName, string name, string profileImage, string byScreenName = null)
         {
-            if (_bannedPatrons.Contains(screenName))
+            if (_bannedPatrons.Contains(screenName) || _bannedPatrons.Contains(byScreenName))
             {
                 return;
             }
@@ -57,9 +57,11 @@ namespace CgBarBackend.Services
             _barTenderRepository.SavePatrons(Patrons); // this is call synchronously because we don't want to wait for this to complete
         }
 
-        public void OrderDrink(string screenName, string drink)
+        public bool PatronExists(string screenName) => _patrons.ContainsKey(screenName);
+
+        public void OrderDrink(string screenName, string drink, string byScreenName = null)
         {
-            if (_bannedPatrons.Contains(screenName))
+            if (_bannedPatrons.Contains(screenName) || _bannedPatrons.Contains(byScreenName))
             {
                 return;
             }
