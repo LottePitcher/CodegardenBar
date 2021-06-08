@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using CgBarBackend.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace CgBarBackend.Services
 {
@@ -12,14 +13,21 @@ namespace CgBarBackend.Services
     {
         private ConcurrentDictionary<string, Patron> _patrons = new();
         private Timer _cleanupTimer = new Timer();
+        private int _drinkExpireTimeInMinutes = 30;
+        private int _patronExpireTimeInMinutes = 60;
+        private int _expireTimeIntervalInMilliseconds = 60000;
 
         public event EventHandler<Patron> PatronAdded;
         public event EventHandler<string> PatronExpired;
         public event EventHandler<Patron> DrinkOrdered;
         public event EventHandler<string> DrinkExpired;
 
-        public BarTender()
+        public BarTender(IConfiguration configuration)
         {
+            int.TryParse(configuration["BarTender:DrinkExpireTimeInMinutes"], out _drinkExpireTimeInMinutes);
+            int.TryParse(configuration["BarTender:PatronExpireTimeInMinutes"], out _patronExpireTimeInMinutes);
+            int.TryParse(configuration["BarTender:ExpireTimeIntervalInMilliseconds"], out _expireTimeIntervalInMilliseconds);
+            _cleanupTimer.Interval = _expireTimeIntervalInMilliseconds;
             _cleanupTimer.Elapsed += (sender, args) => Cleanup();
             _cleanupTimer.Start();
         }
@@ -53,8 +61,8 @@ namespace CgBarBackend.Services
 
         private void Cleanup()
         {
-            var drinkTimeCheck = DateTime.Now.AddMinutes(-30);
-            var activeTimeCheck = DateTime.Now.AddMinutes(-60);
+            var drinkTimeCheck = DateTime.Now.AddMinutes(-1 * _drinkExpireTimeInMinutes);
+            var activeTimeCheck = DateTime.Now.AddMinutes(-1 * _patronExpireTimeInMinutes);
             foreach (var patron in _patrons)
             {
                 if (patron.Value.LastDrinkOrdered < activeTimeCheck && _patrons.Remove(patron.Key, out _))

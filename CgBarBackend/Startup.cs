@@ -28,7 +28,7 @@ namespace CgBarBackend
             services.AddControllers();
             services.AddSingleton<ITwitterCredentialsSupplier, TwitterCredentialsSupplier>();
             services.AddSingleton<ITwitterClientFactory, TwitterClientFactory>();
-            services.AddSingleton<ITwitterWebhookHandler, TwitterWebhookHandler>();
+            services.AddSingleton<ITwitterWebhookManager, TwitterWebhookManager>();
             services.AddSingleton<IBarTender, BarTender>();
 
             // remove when adding mvc
@@ -55,7 +55,7 @@ namespace CgBarBackend
             var accountActivityRequestHandler = twitterClient.AccountActivity.CreateRequestHandler();
             app.UseTweetinviWebhooks(new WebhookMiddlewareConfiguration(accountActivityRequestHandler));
 
-            var twitterWebhookHandler = app.ApplicationServices.GetService<ITwitterWebhookHandler>();
+            var twitterWebhookHandler = app.ApplicationServices.GetService<ITwitterWebhookManager>();
             twitterWebhookHandler.Initialize(accountActivityRequestHandler);
 
             var existingUserSubscriptions = twitterClient.AccountActivity.GetAccountActivitySubscriptionsAsync(
@@ -107,7 +107,7 @@ namespace CgBarBackend
             bartender.DrinkExpired += async (sender, screenName) =>
                 await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
             bartender.PatronExpired += async (sender, screenName) =>
-                await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
+                await hubContext.NotifyAllPatronExpired(screenName).ConfigureAwait(false);
             
         }
     }

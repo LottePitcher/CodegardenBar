@@ -12,17 +12,17 @@ using Tweetinvi.WebLogic;
 
 namespace CgBarBackend.Services
 {
-    public class TwitterWebhookHandler : ITwitterWebhookHandler
+    public class TwitterWebhookManager : ITwitterWebhookManager
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<TwitterWebhookHandler> _logger;
+        private readonly ILogger<TwitterWebhookManager> _logger;
         private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _twitterbarHub;
         private IAccountActivityRequestHandler _accountActivityRequestHandler;
 
         private ConcurrentBag<long> _handledUsers = new ConcurrentBag<long>();
 
-        public TwitterWebhookHandler(IConfiguration configuration,
-            ILogger<TwitterWebhookHandler> logger,
+        public TwitterWebhookManager(IConfiguration configuration,
+            ILogger<TwitterWebhookManager> logger,
             IHubContext<TwitterBarHub, ITwitterBarHub> twitterbarHub)
         {
             _configuration = configuration;

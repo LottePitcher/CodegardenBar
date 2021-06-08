@@ -20,17 +20,17 @@ namespace CgBarBackend.Controllers
         private readonly ITwitterClientFactory _twitterClientFactory;
         private readonly IConfiguration _configuration;
         private readonly IMemoryCache _cache;
-        private readonly ITwitterWebhookHandler _twitterWebhookHandler;
+        private readonly ITwitterWebhookManager _twitterWebhookManager;
         private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _twitterBarHub;
 
         public TwitterAdminController(ITwitterClientFactory twitterClientFactory, IConfiguration configuration,
-            IMemoryCache cache, ITwitterWebhookHandler twitterWebhookHandler,
+            IMemoryCache cache, ITwitterWebhookManager twitterWebhookManager,
             IHubContext<TwitterBarHub,ITwitterBarHub> twitterBarHub)
         {
             _twitterClientFactory = twitterClientFactory;
             _configuration = configuration;
             _cache = cache;
-            _twitterWebhookHandler = twitterWebhookHandler;
+            _twitterWebhookManager = twitterWebhookManager;
             _twitterBarHub = twitterBarHub;
         }
 
@@ -129,7 +129,7 @@ namespace CgBarBackend.Controllers
 
             var existingUserSubscriptions = await appClient.AccountActivity.GetAccountActivitySubscriptionsAsync(
                 _configuration["TwitterApi:Environment"]);
-            _twitterWebhookHandler.AddMissingSubscriptions(existingUserSubscriptions);
+            _twitterWebhookManager.AddMissingSubscriptions(existingUserSubscriptions);
             return true;
         }
 

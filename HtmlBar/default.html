@@ -41,40 +41,66 @@
   <!-- Use the second one for production, its faster and has less console information -->
   <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2"></script> -->
+
+  <!-- axios for http calls -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
     "use strict";
-
-    var connection = new signalR.HubConnectionBuilder().withUrl("https://localhost:44361/signalR/TwitterBar").build();
-
-    connection.on("Ping", function () {
-      console.log("singalR ping recieved")
-    });
-
-    connection.on("TweetFavorited", function(){
-      console.log("Somebody liked a bar tweet")
-    })
-
-    connection.start().then(function () {
-      console.log("Connection to signalR hub started")
-    }).catch(function (err) {
-      return console.error(err.toString());
-    });
-
+    var baseUrl = "https://3e3c31de0a42.ngrok.io";
     var app = new Vue({
       el: '#barapp',
       data: {
-        barPatrons: [{
-          screenName: "lottepitcher",
-          name: "Lotte Pitcher",
-          profileImage: "https://pbs.twimg.com/profile_images/1134420323150024704/LzV-zWi__400x400.png",
-          drink: "beer"
-        },
-        {
-          screenName: "migaroez",
-          name: "Sven Geusens",
-          profileImage: "https://pbs.twimg.com/profile_images/1137300241676406784/FqI-fi1k_400x400.png",
-          drink: "vodka"
-        }]
+        barPatrons: []
+      },
+      mounted: function(){
+        var context = this;
+        axios.get(baseUrl + '/Bar/Patrons')
+          .then(function (response) {
+            // handle success
+            console.log(response);
+            context.barPatrons = response.data
+          })
+          .catch(function (error) {
+            // handle error
+            console.log(error);
+          });
+
+          var connection = new signalR.HubConnectionBuilder().withUrl(baseUrl + "/signalR/TwitterBar").build();
+
+          connection.on("Ping", function () {
+            console.log("singalR ping recieved")
+          });
+
+          connection.on("PatronAdded", function(patron){
+            context.barPatrons.push(patron)
+          });
+
+          connection.on("DrinkOrdered", function(patron){
+            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
+            if(existingIndex >= 0){
+              context.barPatrons[existingIndex].drink = patron.drink
+            }
+          })
+
+          connection.on("DrinkExpired", function(patronScreenName){
+            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
+            if(existingIndex >= 0){
+              context.barPatrons[existingIndex].drink = null
+            }
+          })
+
+          connection.on("PatronExpired", function(patronScreenName){
+            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
+            if(existingIndex >= 0){
+              context.barPatrons.splice(existingIndex,1)
+            }
+          })
+
+          connection.start().then(function () {
+            console.log("Connection to signalR hub started")
+          }).catch(function (err) {
+            return console.error(err.toString());
+          });
       }
     })
   </script>
