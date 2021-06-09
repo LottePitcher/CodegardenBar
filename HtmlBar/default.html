@@ -50,7 +50,13 @@
     var app = new Vue({
       el: '#barapp',
       data: {
-        barPatrons: []
+        barPatrons: [],
+        barTenderMessages : ["1","2","3","4","5","6","7","8","9","10"]
+      },
+      computed: {
+        displayMessages: function(){
+          return this.barTenderMessages.slice(0,2)
+        }
       },
       mounted: function(){
         var context = this;
@@ -65,50 +71,58 @@
             console.log(error);
           });
 
-          var connection = new signalR.HubConnectionBuilder().withUrl(baseUrl + "/signalR/TwitterBar").build();
+        var connection = new signalR.HubConnectionBuilder().withUrl(baseUrl + "/signalR/TwitterBar").build();
 
-          connection.on("Ping", function () {
-            console.log("singalR ping recieved")
-          });
+        connection.on("Ping", function () {
+          console.log("singalR ping recieved")
+        });
 
-          connection.on("PatronAdded", function(patron){
-            context.barPatrons.push(patron)
-          });
+        connection.on("PatronAdded", function(patron){
+          context.barPatrons.push(patron)
+        });
 
-          connection.on("DrinkOrdered", function(patron){
-            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
-            if(existingIndex >= 0){
-              context.barPatrons[existingIndex].drink = patron.drink
-            }
-          })
+        connection.on("DrinkOrdered", function(patron){
+          var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
+          if(existingIndex >= 0){
+            context.barPatrons[existingIndex].drink = patron.drink
+          }
+        })
 
-          connection.on("DrinkExpired", function(patronScreenName){
-            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
-            if(existingIndex >= 0){
-              context.barPatrons[existingIndex].drink = null
-            }
-          })
+        connection.on("DrinkExpired", function(patronScreenName){
+          var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
+          if(existingIndex >= 0){
+            context.barPatrons[existingIndex].drink = null
+          }
+        })
 
-          connection.on("PatronExpired", function(patronScreenName){
-            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
-            if(existingIndex >= 0){
-              context.barPatrons.splice(existingIndex,1)
-            }
-          })
+        connection.on("PatronExpired", function(patronScreenName){
+          var existingIndex = context.barPatrons.findIndex(item => item.screenName === patronScreenName);
+          if(existingIndex >= 0){
+            context.barPatrons.splice(existingIndex,1)
+          }
+        })
 
-          connection.start().then(function () {
-            console.log("Connection to signalR hub started")
-          }).catch(function (err) {
-            return console.error(err.toString());
-          });
+        connection.start().then(function () {
+          console.log("Connection to signalR hub started")
+        }).catch(function (err) {
+          return console.error(err.toString());
+        });
 
-          connection.on("PatronPolitenessChanged", function(patron){
-            console.log("PatronPolitenessChanged",patron)
-            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
-            if(existingIndex >= 0){
-              context.barPatrons[existingIndex].isPolite = patron.isPolite
-            }
-          })
+        connection.on("PatronPolitenessChanged", function(patron){
+          var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
+          if(existingIndex >= 0){
+            context.barPatrons[existingIndex].isPolite = patron.isPolite
+          }
+        })
+
+        connection.on("BarTenderMessage", function(message){
+          console.log("BarTenderMessage",message)
+            context.barTenderMessages.push(message)
+        })
+
+        setInterval(() =>{
+          this.barTenderMessages.splice(0,1);
+        }, 2000);
       }
     })
   </script>

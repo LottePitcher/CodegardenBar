@@ -43,6 +43,10 @@ namespace CgBarBackend.Hubs
         {
             await hub.Clients.All.PatronPolitenessChanged(new PatronDto(patron)).ConfigureAwait(false);
         }
-        
+
+        public static async Task NotifyAllBarTenderMessage(this IHubContext<TwitterBarHub, ITwitterBarHub> hub, string message)
+        {
+            await hub.Clients.All.BarTenderMessage(message).ConfigureAwait(false);
+        }
     }
 }

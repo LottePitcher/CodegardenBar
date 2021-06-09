@@ -17,6 +17,7 @@ namespace CgBarBackend.Hubs
         Task DrinkExpired(string patronScreenName);
         Task PatronExpired(string patronScreenName);
         Task PatronPolitenessChanged(PatronDto patron);
+        Task BarTenderMessage(string message);
 
     }
 
