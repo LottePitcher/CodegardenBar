@@ -24,7 +24,7 @@ jobs:
         dotnet-version: '5.0.x'
 
     - name: Build with dotnet
-      run: dotnet build --configuration Release
+      run: dotnet build CgBarBackend/CgBarBackend.csproj --configuration Release
 
     - name: dotnet publish
       run: dotnet publish CgBarBackend/CgBarBackend.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
