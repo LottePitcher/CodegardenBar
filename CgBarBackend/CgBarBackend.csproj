@@ -5,19 +5,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="appsettings.json.local" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="appsettings.json.local">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="NReco.Logging.File" Version="1.1.1" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
     <PackageReference Include="TweetinviAPI.AspNetPlugin" Version="5.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json.local">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
