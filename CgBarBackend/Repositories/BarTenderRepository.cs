@@ -16,7 +16,8 @@ namespace CgBarBackend.Repositories
         private string DrinksFile => Path.Combine(BasePath, "drinks.repo.json");
         private string PoliteWordsFile => Path.Combine(BasePath, "politeWords.repo.json");
         private string OrdersFile => Path.Combine(BasePath, "orders.repo.json");
-
+        private string MessagesFile => Path.Combine(BasePath, "messages.repo.json");
+        
         public BarTenderRepository(IConfiguration configuration) : base(configuration, "BarTender:RepositoryBaseFolder", Path.Combine(Environment.CurrentDirectory, "BarRepository"))
         {
         }
@@ -69,6 +70,16 @@ namespace CgBarBackend.Repositories
         public async Task<Order[]> LoadOrders()
         {
             return await Load<Order[]>(OrdersFile).ConfigureAwait(false);
+        }
+
+        public async Task SaveMessages(IEnumerable<BarTenderMessage> message)
+        {
+            await Save(message, MessagesFile).ConfigureAwait(false);
+        }
+
+        public async Task<BarTenderMessage[]> LoadMessages()
+        {
+            return await Load<BarTenderMessage[]>(MessagesFile).ConfigureAwait(false);
         }
     }
 }

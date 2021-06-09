@@ -14,6 +14,7 @@ namespace CgBarBackend.Services
         IEnumerable<Patron> Patrons { get; }
         IReadOnlyList<string> Drinks { get; }
         IReadOnlyList<string> PoliteWords { get; }
+        IReadOnlyList<BarTenderMessage> Messages { get; }
         void AddPatron(string screenName, string name, string profileImage, string byScreenName = null);
         void OrderDrink(string screenName, string drink, bool polite = false, string byScreenName = null);
         Task Load();
@@ -25,5 +26,7 @@ namespace CgBarBackend.Services
         bool AddPoliteWord(string name);
         bool RemovePoliteWord(string name);
         event EventHandler<Patron> PatronPolitenessChanged;
+        bool AddMessage(BarTenderMessage message);
+        bool RemoveMessage(int index);
     }
 }

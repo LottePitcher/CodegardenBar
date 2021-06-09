@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Authorization;
 using CgBarBackend.Hubs;
+using CgBarBackend.Models;
 using CgBarBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +19,7 @@ namespace CgBarBackend.Controllers
         private readonly IBarTender _barTender;
         private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _hubContext;
 
-        public BarAdminController(IBarTender barTender, IHubContext<TwitterBarHub,ITwitterBarHub> hubContext)
+        public BarAdminController(IBarTender barTender, IHubContext<TwitterBarHub, ITwitterBarHub> hubContext)
         {
             _barTender = barTender;
             _hubContext = hubContext;
@@ -37,13 +38,13 @@ namespace CgBarBackend.Controllers
         [HttpPost]
         public void AddPatron(string screenName, string name, string profileImage)
         {
-            _barTender.AddPatron(screenName,name,profileImage);
+            _barTender.AddPatron(screenName, name, profileImage);
         }
 
         [HttpPost]
         public void OrderDrink(string screenName, string drink)
         {
-            _barTender.OrderDrink(screenName,drink);
+            _barTender.OrderDrink(screenName, drink);
         }
 
         [HttpPost]
@@ -75,7 +76,7 @@ namespace CgBarBackend.Controllers
             return _barTender.Drinks;
         }
 
-        [HttpPost] 
+        [HttpPost]
         public void AddPoliteWord(string name)
         {
             _barTender.AddPoliteWord(name);
@@ -90,6 +91,23 @@ namespace CgBarBackend.Controllers
         public IEnumerable<string> PoliteWords()
         {
             return _barTender.PoliteWords;
+        }
+
+        [HttpPost]
+        public void AddMessage(string eventType, string target, string template)
+        {
+            _barTender.AddMessage(new BarTenderMessage(eventType, target, template));
+        }
+
+        [HttpPost]
+        public void RemoveMessage(int index)
+        {
+            _barTender.RemoveMessage(index);
+        }
+
+        public IEnumerable<BarTenderMessage> Messages()
+        {
+            return _barTender.Messages;
         }
     }
 }

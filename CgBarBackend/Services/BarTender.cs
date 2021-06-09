@@ -13,24 +13,28 @@ namespace CgBarBackend.Services
     public class BarTender : IBarTender
     {
         private readonly IBarTenderRepository _barTenderRepository;
-        private ConcurrentDictionary<string, Patron> _patrons = new();
+        private readonly ConcurrentDictionary<string, Patron> _patrons = new();
 
+        private readonly List<string> _drinks = new();
         public IReadOnlyList<string> Drinks => _drinks.AsReadOnly();
+
+        private readonly List<string> _politeWords = new();
         public IReadOnlyList<string> PoliteWords => _politeWords.AsReadOnly();
-        private List<string> _drinks = new();
-        private List<string> _politeWords = new();
 
-        private object _bannedPatronsLock = new();
-        private List<string> _bannedPatrons = new();
+        private readonly List<BarTenderMessage> _messages = new();
+        public IReadOnlyList<BarTenderMessage> Messages => _messages.AsReadOnly();
 
-        private Timer _cleanupTimer = new();
-        private int _drinkExpireTimeInMinutes = 30;
-        private int _patronExpireTimeInMinutes = 60;
-        private int _expireTimeIntervalInMilliseconds = 60000;
+        private readonly object _bannedPatronsLock = new();
+        private readonly List<string> _bannedPatrons = new();
 
-        private ConcurrentQueue<Order> _orders = new();
-        private Timer _processTimer = new();
-        private int _processTimeIntervalInMilliseconds = 1000;
+        private readonly Timer _cleanupTimer = new();
+        private readonly int _drinkExpireTimeInMinutes = 30;
+        private readonly int _patronExpireTimeInMinutes = 60;
+        private readonly int _expireTimeIntervalInMilliseconds = 60000;
+
+        private readonly ConcurrentQueue<Order> _orders = new();
+        private readonly Timer _processTimer = new();
+        private readonly int _processTimeIntervalInMilliseconds = 1000;
 
         public event EventHandler<Patron> PatronAdded;
         public event EventHandler<string> PatronExpired;
@@ -169,6 +173,28 @@ namespace CgBarBackend.Services
             return true;
         }
 
+        public bool AddMessage(BarTenderMessage message)
+        {
+            if (_messages.Contains(message))
+            {
+                return false;
+            }
+            _messages.Add(message);
+            _barTenderRepository.SaveMessages(_messages).ConfigureAwait(false);
+            return true;
+        }
+
+        public bool RemoveMessage(int index)
+        {
+            if (_messages.Count < index+1)
+            {
+                return false;
+            }
+            _messages.RemoveAt(index);
+            _barTenderRepository.SaveMessages(_messages).ConfigureAwait(false);
+            return true;
+        }
+
         public IEnumerable<Patron> Patrons => _patrons.Values.AsEnumerable();
 
         public async Task Load()
@@ -202,6 +228,12 @@ namespace CgBarBackend.Services
             foreach (var order in await _barTenderRepository.LoadOrders().ConfigureAwait(false) ?? new Order[0])
             {
                 _orders.Enqueue(order);
+            }
+
+            _messages.Clear();
+            foreach (var message in await _barTenderRepository.LoadMessages().ConfigureAwait(false) ?? new BarTenderMessage[0])
+            {
+                _messages.Add(message);
             }
         }
 

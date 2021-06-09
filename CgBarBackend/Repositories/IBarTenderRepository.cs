@@ -16,5 +16,7 @@ namespace CgBarBackend.Repositories
         Task<string[]> LoadPoliteWords();
         Task SaveOrders(IEnumerable<Order> politeWords);
         Task<Order[]> LoadOrders();
+        Task<BarTenderMessage[]> LoadMessages();
+        Task SaveMessages(IEnumerable<BarTenderMessage> message);
     }
 }
