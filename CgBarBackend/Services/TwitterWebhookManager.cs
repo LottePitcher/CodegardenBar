@@ -108,12 +108,12 @@ namespace CgBarBackend.Services
             {
                 foreach (var person in mentionedPeople)
                 {
-                    _barTender.OrderDrink(person.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                    _barTender.OrderDrink(person.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
                 }
             }
             else
             {
-                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink);
+                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink, polite: foundPoliteWord?.Any() == true);
             }
         }
     }

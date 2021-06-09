@@ -18,13 +18,13 @@ namespace CgBarBackend.Models
             Name = patron.Name;
             ProfileImage = patron.ProfileImage;
             Drink = patron.Drink;
-            Polite = patron.Polite;
+            IsPolite = patron.IsPolite;
         }
 
         public string ScreenName { get; set; }
         public string Name { get; set; }
         public string ProfileImage { get; set; }
         public string Drink { get; set; }
-        public bool Polite { get; set; }
+        public bool IsPolite { get; set; }
     }
 }

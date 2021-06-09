@@ -101,6 +101,14 @@
           }).catch(function (err) {
             return console.error(err.toString());
           });
+
+          connection.on("PatronPolitenessChanged", function(patron){
+            console.log("PatronPolitenessChanged",patron)
+            var existingIndex = context.barPatrons.findIndex(item => item.screenName === patron.screenName);
+            if(existingIndex >= 0){
+              context.barPatrons[existingIndex].isPolite = patron.isPolite
+            }
+          })
       }
     })
   </script>

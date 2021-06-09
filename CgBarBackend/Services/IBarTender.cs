@@ -24,5 +24,6 @@ namespace CgBarBackend.Services
         bool RemoveDrink(string name);
         bool AddPoliteWord(string name);
         bool RemovePoliteWord(string name);
+        event EventHandler<Patron> PatronPolitenessChanged;
     }
 }

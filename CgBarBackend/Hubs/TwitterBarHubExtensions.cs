@@ -38,5 +38,11 @@ namespace CgBarBackend.Hubs
         {
             await hub.Clients.All.PatronExpired(patronScreenName).ConfigureAwait(false);
         }
+
+        public static async Task NotifyAllPatronPolitenessChanged(this IHubContext<TwitterBarHub, ITwitterBarHub> hub, Patron patron)
+        {
+            await hub.Clients.All.PatronPolitenessChanged(new PatronDto(patron)).ConfigureAwait(false);
+        }
+        
     }
 }

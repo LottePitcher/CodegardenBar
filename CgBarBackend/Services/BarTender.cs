@@ -36,6 +36,7 @@ namespace CgBarBackend.Services
         public event EventHandler<string> PatronExpired;
         public event EventHandler<Patron> DrinkDelivered;
         public event EventHandler<string> DrinkExpired;
+        public event EventHandler<Patron> PatronPolitenessChanged;
 
         public BarTender(IConfiguration configuration, IBarTenderRepository barTenderRepository)
         {
@@ -86,6 +87,8 @@ namespace CgBarBackend.Services
 
             _orders.Enqueue(new Order(screenName, drink));
             _barTenderRepository.SaveOrders(_orders);
+
+            HandlePoliteness(byScreenName ?? screenName, polite);
         }
 
         public bool BanPatron(string screenName)
@@ -234,6 +237,30 @@ namespace CgBarBackend.Services
             _patrons[order.ScreenName].LastDrinkDelivered = DateTime.Now;
             DrinkDelivered?.Invoke(this, _patrons[order.ScreenName]);
             _barTenderRepository.SaveOrders(_orders);
+        }
+
+        private void HandlePoliteness(string patronScreenName, bool polite)
+        {
+            var orderingPatron = _patrons[patronScreenName];
+            if (orderingPatron == null)
+            {
+                return;
+            }
+
+            var wasPolite = orderingPatron.IsPolite;
+            if (polite)
+            {
+                orderingPatron.IncreasePolitenessLevel();
+            }
+            else
+            {
+                orderingPatron.DecreasePolitenessLevel();
+            }
+
+            if (wasPolite != orderingPatron.IsPolite)
+            {
+                PatronPolitenessChanged?.Invoke(this, orderingPatron);
+            }
         }
     }
 }

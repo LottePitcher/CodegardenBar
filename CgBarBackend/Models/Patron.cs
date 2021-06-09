@@ -12,6 +12,27 @@ namespace CgBarBackend.Models
         public string ProfileImage { get; set; }
         public string Drink { get; set; }
         public DateTime LastDrinkDelivered { get; set; }
-        public bool Polite { get; set; }
+        public int PolitenessLevel { get; private set; } = 4;
+        public bool IsPolite => PolitenessLevel >= 5;
+
+        public void IncreasePolitenessLevel()
+        {
+            if (PolitenessLevel >= 10)
+            {
+                return;
+            }
+
+            PolitenessLevel++;
+        }
+
+        public void DecreasePolitenessLevel()
+        {
+            if (PolitenessLevel <= 0)
+            {
+                return;
+            }
+
+            PolitenessLevel--;
+        }
     }
 }

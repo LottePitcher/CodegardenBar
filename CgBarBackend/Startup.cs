@@ -110,6 +110,8 @@ namespace CgBarBackend
                 await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
             bartender.PatronExpired += async (sender, screenName) =>
                 await hubContext.NotifyAllPatronExpired(screenName).ConfigureAwait(false);
+            bartender.PatronPolitenessChanged += async (sender, patron) =>
+                await hubContext.NotifyAllPatronPolitenessChanged(patron).ConfigureAwait(false);
 
             bartender.Load();
 
