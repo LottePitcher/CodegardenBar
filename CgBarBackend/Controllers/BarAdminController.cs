@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Authorization;
+using CgBarBackend.Hubs;
 using CgBarBackend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CgBarBackend.Controllers
 {
@@ -14,15 +16,22 @@ namespace CgBarBackend.Controllers
     public class BarAdminController : ControllerBase
     {
         private readonly IBarTender _barTender;
+        private readonly IHubContext<TwitterBarHub, ITwitterBarHub> _hubContext;
 
-        public BarAdminController(IBarTender barTender)
+        public BarAdminController(IBarTender barTender, IHubContext<TwitterBarHub,ITwitterBarHub> hubContext)
         {
             _barTender = barTender;
+            _hubContext = hubContext;
         }
 
         public bool Ping()
         {
             return true;
+        }
+
+        public async Task PingHubClients()
+        {
+            await _hubContext.Ping();
         }
 
         [HttpPost]

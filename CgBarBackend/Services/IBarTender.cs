@@ -9,13 +9,13 @@ namespace CgBarBackend.Services
     {
         event EventHandler<Patron> PatronAdded;
         event EventHandler<string> PatronExpired;
-        event EventHandler<Patron> DrinkOrdered;
+        event EventHandler<Patron> DrinkDelivered;
         event EventHandler<string> DrinkExpired;
         IEnumerable<Patron> Patrons { get; }
         IReadOnlyList<string> Drinks { get; }
         IReadOnlyList<string> PoliteWords { get; }
         void AddPatron(string screenName, string name, string profileImage, string byScreenName = null);
-        void OrderDrink(string screenName, string drink, string byScreenName = null);
+        void OrderDrink(string screenName, string drink, bool polite = false, string byScreenName = null);
         Task Load();
         bool BanPatron(string screenName);
         bool UnBanPatron(string screenName);

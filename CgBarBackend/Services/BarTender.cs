@@ -16,21 +16,25 @@ namespace CgBarBackend.Services
         private ConcurrentDictionary<string, Patron> _patrons = new();
 
         public IReadOnlyList<string> Drinks => _drinks.AsReadOnly();
-        public IReadOnlyList<string> PoliteWords => _drinks.AsReadOnly();
+        public IReadOnlyList<string> PoliteWords => _politeWords.AsReadOnly();
         private List<string> _drinks = new();
         private List<string> _politeWords = new();
 
         private object _bannedPatronsLock = new();
         private List<string> _bannedPatrons = new();
 
-        private Timer _cleanupTimer = new Timer();
+        private Timer _cleanupTimer = new();
         private int _drinkExpireTimeInMinutes = 30;
         private int _patronExpireTimeInMinutes = 60;
         private int _expireTimeIntervalInMilliseconds = 60000;
 
+        private ConcurrentQueue<Order> _orders = new();
+        private Timer _processTimer = new();
+        private int _processTimeIntervalInMilliseconds = 1000;
+
         public event EventHandler<Patron> PatronAdded;
         public event EventHandler<string> PatronExpired;
-        public event EventHandler<Patron> DrinkOrdered;
+        public event EventHandler<Patron> DrinkDelivered;
         public event EventHandler<string> DrinkExpired;
 
         public BarTender(IConfiguration configuration, IBarTenderRepository barTenderRepository)
@@ -39,9 +43,14 @@ namespace CgBarBackend.Services
             int.TryParse(configuration["BarTender:DrinkExpireTimeInMinutes"], out _drinkExpireTimeInMinutes);
             int.TryParse(configuration["BarTender:PatronExpireTimeInMinutes"], out _patronExpireTimeInMinutes);
             int.TryParse(configuration["BarTender:ExpireTimeIntervalInMilliseconds"], out _expireTimeIntervalInMilliseconds);
+            int.TryParse(configuration["BarTender:ProcessTimeIntervalInMilliseconds"], out _processTimeIntervalInMilliseconds);
             _cleanupTimer.Interval = _expireTimeIntervalInMilliseconds;
             _cleanupTimer.Elapsed += (sender, args) => Cleanup();
             _cleanupTimer.Start();
+
+            _processTimer.Interval = _processTimeIntervalInMilliseconds;
+            _processTimer.Elapsed += ProcessOrder;
+            _processTimer.Start();
         }
 
         public void AddPatron(string screenName, string name, string profileImage, string byScreenName = null)
@@ -56,15 +65,15 @@ namespace CgBarBackend.Services
             }
 
             var patron = new Patron
-                {ScreenName = screenName, Name = name, ProfileImage = profileImage, LastDrinkOrdered = DateTime.Now};
+            { ScreenName = screenName, Name = name, ProfileImage = profileImage, LastDrinkDelivered = DateTime.Now };
             _patrons.TryAdd(screenName, patron);
-            PatronAdded?.Invoke(this,patron);
+            PatronAdded?.Invoke(this, patron);
             _barTenderRepository.SavePatrons(Patrons); // this is call synchronously because we don't want to wait for this to complete
         }
 
         public bool PatronExists(string screenName) => _patrons.ContainsKey(screenName);
 
-        public void OrderDrink(string screenName, string drink, string byScreenName = null)
+        public void OrderDrink(string screenName, string drink, bool polite = false, string byScreenName = null)
         {
             if (_bannedPatrons.Contains(screenName) || _bannedPatrons.Contains(byScreenName))
             {
@@ -75,9 +84,8 @@ namespace CgBarBackend.Services
                 return;
             }
 
-            _patrons[screenName].Drink = drink;
-            _patrons[screenName].LastDrinkOrdered = DateTime.Now;
-            DrinkOrdered?.Invoke(this, _patrons[screenName]);
+            _orders.Enqueue(new Order(screenName, drink));
+            _barTenderRepository.SaveOrders(_orders);
         }
 
         public bool BanPatron(string screenName)
@@ -164,27 +172,33 @@ namespace CgBarBackend.Services
         {
             _patrons.Clear();
 
-            foreach (var patron in await _barTenderRepository.LoadPatrons().ConfigureAwait(false))
+            foreach (var patron in await _barTenderRepository.LoadPatrons().ConfigureAwait(false) ?? new Patron[0])
             {
                 _patrons.TryAdd(patron.ScreenName, patron);
             }
 
             _bannedPatrons.Clear();
-            foreach (var bannedPatron in await _barTenderRepository.LoadBannedPatrons().ConfigureAwait(false))
+            foreach (var bannedPatron in await _barTenderRepository.LoadBannedPatrons().ConfigureAwait(false) ?? new string[0])
             {
                 _bannedPatrons.Add(bannedPatron);
             }
 
             _drinks.Clear();
-            foreach (var drink in await _barTenderRepository.LoadDrinks().ConfigureAwait(false))
+            foreach (var drink in await _barTenderRepository.LoadDrinks().ConfigureAwait(false) ?? new string[0])
             {
                 _drinks.Add(drink);
             }
 
             _politeWords.Clear();
-            foreach (var politeWord in await _barTenderRepository.LoadPoliteWords().ConfigureAwait(false))
+            foreach (var politeWord in await _barTenderRepository.LoadPoliteWords().ConfigureAwait(false) ?? new string[0])
             {
                 _politeWords.Add(politeWord);
+            }
+
+            _orders.Clear();
+            foreach (var order in await _barTenderRepository.LoadOrders().ConfigureAwait(false) ?? new Order[0])
+            {
+                _orders.Enqueue(order);
             }
         }
 
@@ -194,13 +208,13 @@ namespace CgBarBackend.Services
             var activeTimeCheck = DateTime.Now.AddMinutes(-1 * _patronExpireTimeInMinutes);
             foreach (var patron in _patrons)
             {
-                if (patron.Value.LastDrinkOrdered < activeTimeCheck && _patrons.Remove(patron.Key, out _))
+                if (patron.Value.LastDrinkDelivered < activeTimeCheck && _patrons.Remove(patron.Key, out _))
                 {
-                    PatronExpired?.Invoke(this,patron.Key);
+                    PatronExpired?.Invoke(this, patron.Key);
                     continue;
                 }
 
-                if (patron.Value.LastDrinkOrdered < drinkTimeCheck)
+                if (patron.Value.LastDrinkDelivered < drinkTimeCheck)
                 {
                     patron.Value.Drink = null;
                     DrinkExpired?.Invoke(this, patron.Key);
@@ -208,6 +222,18 @@ namespace CgBarBackend.Services
             }
 
             _barTenderRepository.SavePatrons(Patrons).ConfigureAwait(false);
+        }
+
+        private void ProcessOrder(object sender, ElapsedEventArgs e)
+        {
+            if (_orders.TryDequeue(out var order) == false)
+            {
+                return;
+            }
+            _patrons[order.ScreenName].Drink = order.Drink;
+            _patrons[order.ScreenName].LastDrinkDelivered = DateTime.Now;
+            DrinkDelivered?.Invoke(this, _patrons[order.ScreenName]);
+            _barTenderRepository.SaveOrders(_orders);
         }
     }
 }

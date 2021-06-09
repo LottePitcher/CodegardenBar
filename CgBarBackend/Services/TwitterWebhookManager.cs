@@ -76,31 +76,31 @@ namespace CgBarBackend.Services
             accountActivitySteam.TweetCreated += async (sender, tweetCreatedEvent) =>
             {
                 await ProcessTweetIntent(tweetCreatedEvent).ConfigureAwait(false);
-                _logger.LogInformation("Tweet created: {0}",tweetCreatedEvent.Json);
+                _logger.LogInformation("Tweet created: {0}", tweetCreatedEvent.Json);
             };
         }
 
         private async Task ProcessTweetIntent(TweetCreatedEvent tweetCreatedEvent)
         {
             var client = _twitterClientFactory.UserClient;
-            
+
             _barTender.AddPatron(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.Name, tweetCreatedEvent.Tweet.CreatedBy.ProfileImageUrl400x400);
             var mentionedPeople = tweetCreatedEvent.Tweet.UserMentions.Where(um =>
                 um.Id != _userId && _barTender.PatronExists(um.ScreenName) == false).ToList();
             foreach (var userMention in mentionedPeople) //todo put the id in config
             {
                 var user = await client.Users.GetUserAsync(userMention.ScreenName).ConfigureAwait(false);
-                _barTender.AddPatron(user.ScreenName,user.Name,user.ProfileImageUrl400x400, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                _barTender.AddPatron(user.ScreenName, user.Name, user.ProfileImageUrl400x400, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
             }
 
-            var tweetWords = tweetCreatedEvent.Tweet.Text.Split(new char[] { ' ','\n','\r'});
+            var tweetWords = tweetCreatedEvent.Tweet.Text.Split(new char[] { ' ', '\n', '\r' });
             var foundDrink = _barTender.Drinks.FirstOrDefault(allowedDrink => tweetWords.Contains(allowedDrink));
             var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Contains(politeWord));
 
             if (foundDrink == null || foundDrink.Trim().Length <= 0)
             {
                 return;
-                
+
             }
 
             // todo: process politeness
@@ -108,15 +108,13 @@ namespace CgBarBackend.Services
             {
                 foreach (var person in mentionedPeople)
                 {
-                    _barTender.OrderDrink(person.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                    _barTender.OrderDrink(person.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
                 }
             }
             else
             {
-                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName,foundDrink);
+                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink);
             }
-            
-        
         }
     }
 }

@@ -104,7 +104,7 @@ namespace CgBarBackend
 
             bartender.PatronAdded += async (sender, patron) =>
                 await hubContext.NotifyAllPatronAdded(patron).ConfigureAwait(false);
-            bartender.DrinkOrdered += async (sender, patron) =>
+            bartender.DrinkDelivered += async (sender, patron) =>
                 await hubContext.NotifyAllDrinkOrdered(patron).ConfigureAwait(false);
             bartender.DrinkExpired += async (sender, screenName) =>
                 await hubContext.NotifyAllDrinkExpired(screenName).ConfigureAwait(false);
