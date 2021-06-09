@@ -36,11 +36,14 @@ namespace CgBarBackend.Services
         private readonly Timer _processTimer = new();
         private readonly int _processTimeIntervalInMilliseconds = 1000;
 
+        private Random _random = new Random((int)DateTime.Now.Ticks);
+
         public event EventHandler<Patron> PatronAdded;
         public event EventHandler<string> PatronExpired;
         public event EventHandler<Patron> DrinkDelivered;
         public event EventHandler<string> DrinkExpired;
         public event EventHandler<Patron> PatronPolitenessChanged;
+        public event EventHandler<string> BarTenderSpeaks;
 
         public BarTender(IConfiguration configuration, IBarTenderRepository barTenderRepository)
         {
@@ -269,6 +272,16 @@ namespace CgBarBackend.Services
             _patrons[order.ScreenName].LastDrinkDelivered = DateTime.Now;
             DrinkDelivered?.Invoke(this, _patrons[order.ScreenName]);
             _barTenderRepository.SaveOrders(_orders);
+
+            var messages = _messages.Where(m => m.Target == order.ScreenName).ToList();
+            if (messages.Any() == false)
+            {
+                messages = _messages.Where(m => m.Target == null || m.Target.Trim().Length == 0).ToList();
+            }
+
+            var message = messages[_random.Next(0, messages.Count)].Template;
+            message = message.Replace("{{drink}}", order.Drink).Replace("{{screenName}}", order.ScreenName);
+            BarTenderSpeaks?.Invoke(this,message);
         }
 
         private void HandlePoliteness(string patronScreenName, bool polite)

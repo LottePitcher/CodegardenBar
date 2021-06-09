@@ -28,5 +28,6 @@ namespace CgBarBackend.Services
         event EventHandler<Patron> PatronPolitenessChanged;
         bool AddMessage(BarTenderMessage message);
         bool RemoveMessage(int index);
+        event EventHandler<string> BarTenderSpeaks;
     }
 }

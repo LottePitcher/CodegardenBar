@@ -103,7 +103,6 @@ namespace CgBarBackend.Services
 
             }
 
-            // todo: process politeness
             if (mentionedPeople.Any())
             {
                 foreach (var person in mentionedPeople)
