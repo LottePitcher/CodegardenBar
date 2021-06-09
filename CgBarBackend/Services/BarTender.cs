@@ -280,7 +280,7 @@ namespace CgBarBackend.Services
             }
 
             var message = messages[_random.Next(0, messages.Count)].Template;
-            message = message.Replace("{{drink}}", order.Drink).Replace("{{screenName}}", order.ScreenName);
+            message = message.Replace("{{drink}}", order.Drink, StringComparison.InvariantCultureIgnoreCase).Replace("{{screenName}}", order.ScreenName, StringComparison.InvariantCultureIgnoreCase);
             BarTenderSpeaks?.Invoke(this,message);
         }
 

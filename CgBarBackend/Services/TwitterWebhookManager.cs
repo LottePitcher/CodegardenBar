@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
@@ -94,8 +95,8 @@ namespace CgBarBackend.Services
             }
 
             var tweetWords = tweetCreatedEvent.Tweet.Text.Split(new char[] { ' ', '\n', '\r' });
-            var foundDrink = _barTender.Drinks.FirstOrDefault(allowedDrink => tweetWords.Contains(allowedDrink));
-            var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Contains(politeWord));
+            var foundDrink = _barTender.Drinks.FirstOrDefault(allowedDrink => tweetWords.Any(w => string.Equals(allowedDrink,w, StringComparison.InvariantCultureIgnoreCase)));
+            var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Any(w => string.Equals(politeWord,w, StringComparison.InvariantCultureIgnoreCase)));
 
             if (foundDrink == null || foundDrink.Trim().Length <= 0)
             {
