@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using CgBarBackend.Factories;
 using CgBarBackend.Hubs;
@@ -18,6 +19,7 @@ namespace CgBarBackend.Services
 {
     public class TwitterWebhookManager : ITwitterWebhookManager
     {
+        private Regex _cleanRegex = new Regex("[^a-z0-9\n\r ]+", RegexOptions.IgnoreCase);
         private readonly IConfiguration _configuration;
         private readonly ILogger<TwitterWebhookManager> _logger;
         private readonly IBarTender _barTender;
@@ -110,7 +112,9 @@ namespace CgBarBackend.Services
 
             // find the drink and polite words
             var drinks = _barTender.Drinks;
-            var tweetWords = tweetCreatedEvent.Tweet.Text.Split(new char[] { ' ', '\n', '\r' });
+            var cleanedTweetText = _cleanRegex.Replace(tweetCreatedEvent.Tweet.Text, String.Empty);
+            _logger.LogInformation("Cleaned tweet text: {@text}", cleanedTweetText);
+            var tweetWords = cleanedTweetText.Split(new char[] { ' ', '\n', '\r' });
             var foundDrink = drinks.FirstOrDefault(allowedDrink => tweetWords.Any(w => string.Equals(allowedDrink, w, StringComparison.InvariantCultureIgnoreCase)));
             var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Any(w => string.Equals(politeWord, w, StringComparison.InvariantCultureIgnoreCase)));
 
