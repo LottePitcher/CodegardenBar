@@ -117,6 +117,8 @@ namespace CgBarBackend.Services
             var tweetWords = cleanedTweetText.Split(new char[] { ' ', '\n', '\r' });
             var foundDrink = drinks.FirstOrDefault(allowedDrink => tweetWords.Any(w => string.Equals(allowedDrink, w, StringComparison.InvariantCultureIgnoreCase)));
             var foundPoliteWord = _barTender.PoliteWords.FirstOrDefault(politeWord => tweetWords.Any(w => string.Equals(politeWord, w, StringComparison.InvariantCultureIgnoreCase)));
+            var refillKeyword =
+                tweetWords.Any(w => string.Equals("refill", w, StringComparison.InvariantCultureIgnoreCase));
 
             // if no drink is found, ignore the call
             if (foundDrink == null || foundDrink.Trim().Length <= 0)
@@ -125,22 +127,46 @@ namespace CgBarBackend.Services
                 return;
             }
 
+            if (refillKeyword
+                && tweetWords.Any(w => string.Equals("everyone", w, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                foreach (var patron in _barTender.Patrons)
+                {
+                    _barTender.RefillDrink(patron.ScreenName, foundPoliteWord?.Any() == true, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                }
+                return;
+            }
+
             // if its an order for other people, give them all a drink but add the politeness to the caller
             if (otherPatronMentions.Any())
             {
+                if (refillKeyword)
+                {
+                    foreach (var patron in otherPatronMentions)
+                    {
+                        _logger.LogInformation("RefillDrink to: {toPatron},  {fromPatron} ", patron.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                        _barTender.RefillDrink(patron.ScreenName, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
+                    }
+
+                    return;
+                }
+
                 foreach (var patron in otherPatronMentions)
                 {
-                    _logger.LogInformation("OrderDrink to: {toPatron}, {drink}, {fromPatron} ", patron.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName); 
+                    _logger.LogInformation("OrderDrink to: {toPatron}, {drink}, {fromPatron} ", patron.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
                     _barTender.OrderDrink(patron.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
                 }
+                return;
             }
             // else create an order for the caller
-            else
+            if (refillKeyword)
             {
-                _logger.LogInformation("OrderDrink (single) to: {toPatron}, {drink}, {fromPatron} ", tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName); 
-
-                _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink, polite: foundPoliteWord?.Any() == true);
+                _logger.LogInformation("Refill (single) to: {toPatron}, {fromPatron} ", tweetCreatedEvent.Tweet.CreatedBy.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+                _barTender.RefillDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
+                return;
             }
+            _logger.LogInformation("OrderDrink (single) to: {toPatron}, {drink}, {fromPatron} ", tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
+            _barTender.OrderDrink(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, foundDrink, polite: foundPoliteWord?.Any() == true);
         }
     }
 }

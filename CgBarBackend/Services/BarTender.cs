@@ -98,6 +98,21 @@ namespace CgBarBackend.Services
             HandlePoliteness(byScreenName ?? screenName, polite);
         }
 
+        public void RefillDrink(string screenName, bool polite = false, string byScreenName = null)
+        {
+            if (_patrons.ContainsKey(screenName) == false)
+            {
+                return;
+            }
+
+            if (_patrons[screenName].LastOrderedDrink == null || _patrons[screenName].LastOrderedDrink.Length < 0)
+            {
+                return;
+            }
+
+            OrderDrink(screenName, _patrons[screenName].LastOrderedDrink, polite, byScreenName);
+        }
+
         public bool BanPatron(string screenName)
         {
             if (_bannedPatrons.Contains(screenName))
@@ -272,6 +287,7 @@ namespace CgBarBackend.Services
                 return;
             }
             _patrons[order.ScreenName].Drink = order.Drink;
+            _patrons[order.ScreenName].LastOrderedDrink = order.Drink;
             _patrons[order.ScreenName].LastDrinkDelivered = DateTime.Now;
             DrinkDelivered?.Invoke(this, _patrons[order.ScreenName]);
             _barTenderRepository.SaveOrders(_orders);

@@ -29,5 +29,6 @@ namespace CgBarBackend.Services
         bool AddMessage(BarTenderMessage message);
         bool RemoveMessage(int index);
         event EventHandler<string> BarTenderSpeaks;
+        void RefillDrink(string screenName, bool polite = false, string byScreenName = null);
     }
 }

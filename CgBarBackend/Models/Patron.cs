@@ -15,6 +15,14 @@ namespace CgBarBackend.Models
         public int PolitenessLevel { get; private set; } = 4;
         public bool IsPolite => PolitenessLevel >= 5;
 
+        // Fallback is just for non breaking deploy
+        private string _lastOrderedDrink;
+        public string LastOrderedDrink
+        {
+            get => _lastOrderedDrink ?? Drink;
+            set => _lastOrderedDrink = value;
+        }
+
         public void IncreasePolitenessLevel()
         {
             if (PolitenessLevel >= 10)
