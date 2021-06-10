@@ -85,10 +85,15 @@ namespace CgBarBackend.Services
         {
             var client = _twitterClientFactory.UserClient;
 
-            _barTender.AddPatron(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.Name, tweetCreatedEvent.Tweet.CreatedBy.ProfileImageUrl400x400);
-            var mentionedPeople = tweetCreatedEvent.Tweet.UserMentions.Where(um =>
-                um.Id != _userId && _barTender.PatronExists(um.ScreenName) == false).ToList();
-            foreach (var userMention in mentionedPeople) //todo put the id in config
+            // add the calling patron if not in the bar yet
+            if (_barTender.PatronExists(tweetCreatedEvent.Tweet.CreatedBy.ScreenName) == false)
+            {
+                _barTender.AddPatron(tweetCreatedEvent.Tweet.CreatedBy.ScreenName, tweetCreatedEvent.Tweet.CreatedBy.Name, tweetCreatedEvent.Tweet.CreatedBy.ProfileImageUrl400x400);
+            }
+            var otherPatronMentions = tweetCreatedEvent.Tweet.UserMentions.Where(um =>
+                um.Id != _userId && um.ScreenName != tweetCreatedEvent.Tweet.CreatedBy.ScreenName).ToList();
+            var newPatronsMentions = otherPatronMentions.Where(um => _barTender.PatronExists(um.ScreenName) == false);
+            foreach (var userMention in newPatronsMentions) //todo put the id in config
             {
                 var user = await client.Users.GetUserAsync(userMention.ScreenName).ConfigureAwait(false);
                 _barTender.AddPatron(user.ScreenName, user.Name, user.ProfileImageUrl400x400, tweetCreatedEvent.Tweet.CreatedBy.ScreenName);
@@ -101,14 +106,13 @@ namespace CgBarBackend.Services
             if (foundDrink == null || foundDrink.Trim().Length <= 0)
             {
                 return;
-
             }
 
-            if (mentionedPeople.Any())
+            if (otherPatronMentions.Any())
             {
-                foreach (var person in mentionedPeople)
+                foreach (var patron in otherPatronMentions)
                 {
-                    _barTender.OrderDrink(person.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
+                    _barTender.OrderDrink(patron.ScreenName, foundDrink, byScreenName: tweetCreatedEvent.Tweet.CreatedBy.ScreenName, polite: foundPoliteWord?.Any() == true);
                 }
             }
             else
