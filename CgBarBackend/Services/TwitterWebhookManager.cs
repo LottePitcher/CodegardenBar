@@ -121,7 +121,7 @@ namespace CgBarBackend.Services
                 tweetWords.Any(w => string.Equals("refill", w, StringComparison.InvariantCultureIgnoreCase));
 
             // if no drink is found, ignore the call
-            if (foundDrink == null || foundDrink.Trim().Length <= 0)
+            if ((foundDrink == null || foundDrink.Trim().Length <= 0) && refillKeyword == false)
             {
                 _logger.LogInformation("No drink {@drink} found in {@drinks}", tweetWords, drinks);
                 return;
