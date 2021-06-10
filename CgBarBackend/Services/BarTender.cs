@@ -273,7 +273,7 @@ namespace CgBarBackend.Services
             DrinkDelivered?.Invoke(this, _patrons[order.ScreenName]);
             _barTenderRepository.SaveOrders(_orders);
 
-            var messages = _messages.Where(m => m.Target == order.ScreenName).ToList();
+            var messages = _messages.Where(m => string.Equals(m.Target,order.ScreenName,StringComparison.InvariantCultureIgnoreCase)).ToList();
             if (messages.Any() == false)
             {
                 messages = _messages.Where(m => m.Target == null || m.Target.Trim().Length == 0).ToList();
