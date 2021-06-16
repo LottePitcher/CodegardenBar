@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using CgBarBackend.Authorization;
 using CgBarBackend.Factories;
@@ -98,6 +99,20 @@ namespace CgBarBackend.Controllers
             var result = await userClient.AccountActivity.CreateAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"],
                 _configuration["TwitterApi:Host"] + Constants.Twitter.BaseWebhookUrl);
             return result;
+        }
+
+        public async Task<object> DeleteWebhook()
+        {
+            var appClient = _twitterClientFactory.ApplicationBearerTokenClient;
+            var webhooks = await appClient.AccountActivity.GetAccountActivityEnvironmentWebhooksAsync(_configuration["TwitterApi:Environment"]);
+            if (!webhooks.Any())
+            {
+                return new { webhooksCount = 0 };
+            }
+
+            var webhookId = webhooks.FirstOrDefault().Id;
+            await appClient.AccountActivity.DeleteAccountActivityWebhookAsync(_configuration["TwitterApi:Environment"], webhookId);
+            return new { deletedWebhookId = webhookId };
         }
 
         public async Task<object> StartSubscribeToAccount()
