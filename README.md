@@ -7,7 +7,7 @@
 - A way to tunnel the backend to the outside world so twitter can send webhook requests (https://ngrok.com/)
 - Twitter credentials to the app and owning account you want to use for this virtual bar
 - Twitter Account Activity API environment configured (https://developer.twitter.com/en/account/environments)
-- Postman if you want to import the collection for easy api testing (enter collection url here)
+- Postman if you want to import the collection for easy api testing (https://www.getpostman.com/collections/46c767cfb85ef49207c2)
 - A way to serve a static website (https://www.npmjs.com/package/live-server)
 
 ### Setup configuration
