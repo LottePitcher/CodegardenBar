@@ -18,7 +18,7 @@ namespace CgBarBackend.Discord.Commands
         private readonly CommandService _service;
         private readonly IConfiguration _config;
         private readonly IServiceProvider _serviceProvider;
-        private ILogger<OrderCommand>? _logger;
+        private ILogger<OrderCommand> _logger;
 
         public OrderCommand(CommandService service, IConfiguration config, IServiceProvider serviceProvider)
         {
@@ -29,8 +29,9 @@ namespace CgBarBackend.Discord.Commands
         }
 
         [Command("order")]
-        public async Task Order(string message)
+        public async Task Order([Remainder]string message)
         {
+            _logger.LogInformation("Processing new order: " + message);
             var bartender = _serviceProvider.GetService<IBarTender>();
 
             // check if the current user is already a patron

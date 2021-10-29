@@ -24,7 +24,7 @@ namespace CgBarBackend.Discord
             var config = serviceProvider.GetService<IConfiguration>();
             var logger = serviceProvider.GetService<ILogger<DiscordSocketClient>>();
             var commandService = new CommandService();
-            var commandHandler = new CommandHandler(serviceProvider, client, commandService, config);
+            var commandHandler = new CommandHandler(serviceProvider, client, commandService);
             await commandHandler.InstallCommandsAsync();
 
 

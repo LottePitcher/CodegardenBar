@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace CgBarBackend.Discord
 {
@@ -13,13 +15,15 @@ namespace CgBarBackend.Discord
         private readonly IServiceProvider _services;
         private readonly CommandService _commands;
         private readonly IConfiguration _config;
+        private ILogger<CommandHandler>? _logger;
 
         // Retrieve client and CommandService instance via ctor
-        public CommandHandler(IServiceProvider services, DiscordSocketClient client, CommandService commands, IConfiguration config)
+        public CommandHandler(IServiceProvider services, DiscordSocketClient client, CommandService commands)
         {
             _services = services;
             _commands = commands;
-            _config = config;
+            _config = services.GetService<IConfiguration>();
+            _logger = services.GetService<ILogger<CommandHandler>>();
             _client = client;
         }
 
@@ -72,7 +76,7 @@ namespace CgBarBackend.Discord
 
             if (!result.IsSuccess)
             {
-                Console.WriteLine(result.ErrorReason);
+                _logger.LogInformation("Could not execute command: " + result.ErrorReason);
             }
         }
     }
