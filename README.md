@@ -27,7 +27,9 @@
   },
   "BarTender": {
     "AdminPassword": "" //used to contact internal apis
-  }
+  },
+  "DiscordBotToken" : "",
+  "DiscordBotPrefix" : "!bar "
 }
 ```
 - If using postman, edit the collection variables with your host(baseUrl) and admin passwords
