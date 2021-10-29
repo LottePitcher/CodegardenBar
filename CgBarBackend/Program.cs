@@ -1,11 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using CgBarBackend.Discord;
 
 namespace CgBarBackend
 {
@@ -13,7 +9,13 @@ namespace CgBarBackend
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            // we are splitting up the hostbuilder so we can register the discord bot
+            // dependencies in the same container and run it before the site runs (as the site is blocking
+            var hostBuilder = CreateHostBuilder(args);
+            hostBuilder.ConfigureServices(DiscordBot.ConfigureDependencies);
+            var buildHostBuilder = hostBuilder.Build();
+            DiscordBot.Startup(buildHostBuilder.Services);
+            buildHostBuilder.Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -26,5 +28,7 @@ namespace CgBarBackend
                 {
                     config.AddJsonFile("appsettings.json.local", optional: false, reloadOnChange: true);
                 });
+
+        
     }
 }
