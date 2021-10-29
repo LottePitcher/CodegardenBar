@@ -2,9 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>0b722038-1f08-4653-b5a1-47e1c8f12b90</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="2.4.0" />
     <PackageReference Include="NReco.Logging.File" Version="1.1.1" />
     <PackageReference Include="TweetinviAPI" Version="5.0.4" />
     <PackageReference Include="TweetinviAPI.AspNetPlugin" Version="5.0.4" />
