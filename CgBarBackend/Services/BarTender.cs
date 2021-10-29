@@ -269,7 +269,7 @@ namespace CgBarBackend.Services
 
                 if (patron.Value.LastDrinkDelivered < drinkTimeCheck)
                 {
-                    if (patron.Value.Drink != "empty" && patron.Value.Drink == null)
+                    if (patron.Value.Drink != "_empty" && patron.Value.Drink == null)
                     {
                         patron.Value.Drink = "_empty";
                         DrinkExpired?.Invoke(this, patron.Key);
