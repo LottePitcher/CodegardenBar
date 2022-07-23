@@ -20,13 +20,19 @@ namespace CgBarBackend.Discord
 
         public static async void Startup(IServiceProvider serviceProvider)
         {
-            var client = new DiscordSocketClient();
             var config = serviceProvider.GetService<IConfiguration>();
             var logger = serviceProvider.GetService<ILogger<DiscordSocketClient>>();
+
+            if (string.IsNullOrEmpty(config["DiscordBotToken"]))
+            {
+                logger.LogInformation("Discord bot token not set: Discord not enabled");
+                return;
+            }
+
+            var client = new DiscordSocketClient();
             var commandService = new CommandService();
             var commandHandler = new CommandHandler(serviceProvider, client, commandService);
             await commandHandler.InstallCommandsAsync();
-
 
             client.Log += message => LogDiscordMessage(message, logger);
 
